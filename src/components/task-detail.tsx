@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Task } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,99 @@ const statusColors: Record<string, string> = {
   処理済み: "bg-emerald-100 text-emerald-700",
   完了: "bg-green-100 text-green-700",
 };
+
+function ImageViewer({
+  src,
+  onClose,
+}: {
+  src: string;
+  onClose: () => void;
+}) {
+  const [scale, setScale] = useState(1);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const dragging = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.stopPropagation();
+    setScale((s) => Math.min(Math.max(s - e.deltaY * 0.001, 0.5), 5));
+  }, []);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      dragging.current = true;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    []
+  );
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    e.stopPropagation();
+    setPos((p) => ({
+      x: p.x + e.clientX - lastPos.current.x,
+      y: p.y + e.clientY - lastPos.current.y,
+    }));
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    dragging.current = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, []);
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === containerRef.current) onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    setScale(1);
+    setPos({ x: 0, y: 0 });
+  }, [src]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70"
+      onClick={handleBackdropClick}
+      onWheel={handleWheel}
+    >
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        <span className="text-white/70 text-xs select-none">
+          {Math.round(scale * 100)}% ｜ ドラッグで移動 ｜ スクロールで拡大縮小
+        </span>
+        <button
+          className="text-white/70 hover:text-white text-2xl leading-none px-2"
+          onClick={onClose}
+        >
+          ✕
+        </button>
+      </div>
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="select-none rounded-lg"
+        style={{
+          transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+          cursor: dragging.current ? "grabbing" : "grab",
+          maxHeight: "90vh",
+          maxWidth: "90vw",
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      />
+    </div>
+  );
+}
 
 export function TaskDetail({
   task,
@@ -96,16 +189,10 @@ export function TaskDetail({
           )}
 
           {viewingImage && (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 cursor-pointer"
-              onClick={() => setViewingImage(null)}
-            >
-              <img
-                src={viewingImage}
-                alt=""
-                className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
-              />
-            </div>
+            <ImageViewer
+              src={viewingImage}
+              onClose={() => setViewingImage(null)}
+            />
           )}
 
           <div className="grid grid-cols-2 gap-3 text-sm">
