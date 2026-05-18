@@ -7,6 +7,7 @@ import { TaskCard } from "@/components/task-card";
 import { TaskDetail } from "@/components/task-detail";
 import { TaskForm } from "@/components/task-form";
 import { FilterBar, Filters } from "@/components/filter-bar";
+import { GanttChart } from "@/components/gantt-chart";
 import { SettingsPanel } from "@/components/settings-panel";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState<"card" | "gantt">("card");
   const [filters, setFilters] = useState<Filters>({
     projectId: "",
     categoryId: "",
@@ -105,7 +107,21 @@ export default function Home() {
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold tracking-tight">TaskSync</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border overflow-hidden">
+              <button
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${view === "card" ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                onClick={() => setView("card")}
+              >
+                カード
+              </button>
+              <button
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${view === "gantt" ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                onClick={() => setView("gantt")}
+              >
+                ガント
+              </button>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -126,7 +142,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-4">
+      <main className={`mx-auto px-4 py-4 ${view === "card" ? "max-w-7xl" : ""}`}>
         <div className="mb-4">
           <FilterBar
             filters={filters}
@@ -141,26 +157,36 @@ export default function Home() {
           {filteredTasks.length} 件の課題
         </p>
 
-        {filteredTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <p className="text-sm">課題がありません</p>
-            <p className="text-xs mt-1">
-              「課題を追加」から新しい課題を登録してください
-            </p>
-          </div>
+        {view === "card" ? (
+          filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+              <p className="text-sm">課題がありません</p>
+              <p className="text-xs mt-1">
+                「課題を追加」から新しい課題を登録してください
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setDetailOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onClick={() => {
-                  setSelectedTask(task);
-                  setDetailOpen(true);
-                }}
-              />
-            ))}
-          </div>
+          <GanttChart
+            tasks={filteredTasks}
+            onTaskClick={(task) => {
+              setSelectedTask(task);
+              setDetailOpen(true);
+            }}
+          />
         )}
       </main>
 
