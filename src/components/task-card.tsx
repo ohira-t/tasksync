@@ -25,7 +25,8 @@ export function TaskCard({
 
   return (
     <div
-      className="group cursor-pointer rounded-xl border-[3px] border-foreground bg-card p-4 transition-colors hover:border-foreground/70"
+      className="group cursor-pointer rounded-xl border-[3px] bg-card p-4 transition-opacity hover:opacity-80"
+      style={{ borderColor: task.project.color }}
       onClick={onClick}
     >
       <div className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
