@@ -98,7 +98,7 @@ export function GanttChart({
           style={{ width: LABEL_WIDTH }}
         >
           <div
-            className="border-b px-3 flex items-center text-xs font-medium text-muted-foreground"
+            className="border-b px-3 flex items-center text-xs font-semibold text-foreground/80"
             style={{ height: HEADER_HEIGHT }}
           >
             課題
@@ -114,10 +114,10 @@ export function GanttChart({
                 className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: task.project.color }}
               />
-              <span className="text-xs font-mono text-foreground/60 shrink-0">
+              <span className="text-xs font-mono text-foreground/80 shrink-0">
                 {task.taskNumber}
               </span>
-              <span className="text-xs font-medium truncate">{task.title}</span>
+              <span className="text-xs font-semibold truncate">{task.title}</span>
             </div>
           ))}
         </div>
@@ -137,19 +137,19 @@ export function GanttChart({
                 return (
                   <div
                     key={i}
-                    className={`shrink-0 flex flex-col items-center justify-center border-r border-border/60 text-[10px] font-medium ${
+                    className={`shrink-0 flex flex-col items-center justify-center border-r border-border text-[10px] font-semibold ${
                       isToday
                         ? "bg-green-100 font-bold text-green-800"
                         : isSun
-                          ? "text-red-500 bg-red-50/70"
+                          ? "text-red-600 bg-red-50/70"
                           : isSat
-                            ? "text-blue-500 bg-blue-50/50"
-                            : "text-foreground/70"
+                            ? "text-blue-600 bg-blue-50/50"
+                            : "text-foreground"
                     }`}
                     style={{ width: DAY_WIDTH }}
                   >
-                    <span>{formatDate(d)}</span>
-                    <span className="text-[9px]">
+                    <span className="font-semibold">{formatDate(d)}</span>
+                    <span className="text-[9px] font-semibold">
                       {["日", "月", "火", "水", "木", "金", "土"][d.getDay()]}
                     </span>
                   </div>
@@ -166,7 +166,7 @@ export function GanttChart({
                 return (
                   <div
                     key={i}
-                    className={`absolute top-0 bottom-0 border-r border-border/40 ${
+                    className={`absolute top-0 bottom-0 border-r border-border/70 ${
                       isToday
                         ? "bg-green-100/60"
                         : isSun
@@ -188,7 +188,7 @@ export function GanttChart({
               {ganttTasks.map((_, i) => (
                 <div
                   key={i}
-                  className="absolute left-0 right-0 border-b"
+                  className="absolute left-0 right-0 border-b border-border/70"
                   style={{ top: (i + 1) * ROW_HEIGHT }}
                 />
               ))}
@@ -213,7 +213,7 @@ export function GanttChart({
                       height: ROW_HEIGHT - 12,
                       backgroundColor:
                         statusColors[task.status] || "#9ca3af",
-                      opacity: task.status === "完了" ? 0.5 : 0.9,
+                      opacity: task.status === "完了" ? 0.6 : 1,
                     }}
                     onClick={() => onTaskClick(task)}
                   >

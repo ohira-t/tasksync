@@ -25,7 +25,7 @@ export function TaskCard({
 
   return (
     <div
-      className="group cursor-pointer rounded-xl border-2 border-gray-400 bg-card p-4 transition-colors hover:border-gray-500"
+      className="group cursor-pointer rounded-xl border-[3px] border-foreground bg-card p-4 transition-colors hover:border-foreground/70"
       onClick={onClick}
     >
       <div className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
