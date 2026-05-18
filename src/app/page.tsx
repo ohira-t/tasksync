@@ -132,7 +132,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-bold tracking-tight">TaskSync</h1>
+          <h1 className="text-lg font-bold tracking-tight">タスク認識合わせ</h1>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg border overflow-hidden">
               <button
