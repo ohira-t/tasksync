@@ -16,6 +16,7 @@ const DAY_WIDTH = 40;
 const ROW_HEIGHT = 36;
 const HEADER_HEIGHT = 52;
 const LABEL_WIDTH = 280;
+const ASSIGNEE_WIDTH = 80;
 
 function daysBetween(a: Date, b: Date) {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
@@ -95,29 +96,43 @@ export function GanttChart({
         {/* Left labels */}
         <div
           className="shrink-0 border-r bg-muted/30"
-          style={{ width: LABEL_WIDTH }}
+          style={{ width: LABEL_WIDTH + ASSIGNEE_WIDTH }}
         >
           <div
-            className="border-b px-3 flex items-center text-xs font-semibold text-foreground/80"
+            className="border-b flex items-center text-xs font-semibold text-foreground/80"
             style={{ height: HEADER_HEIGHT }}
           >
-            課題
+            <span className="px-3 flex-1">課題</span>
+            <span
+              className="px-2 shrink-0 border-l text-center"
+              style={{ width: ASSIGNEE_WIDTH }}
+            >
+              担当
+            </span>
           </div>
           {ganttTasks.map((task) => (
             <div
               key={task.id}
-              className="border-b px-3 flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-b flex items-center cursor-pointer hover:bg-muted/50 transition-colors"
               style={{ height: ROW_HEIGHT }}
               onClick={() => onTaskClick(task)}
             >
+              <div className="px-3 flex items-center gap-2 flex-1 min-w-0">
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: task.project.color }}
+                />
+                <span className="text-xs font-mono text-foreground/80 shrink-0">
+                  {task.taskNumber}
+                </span>
+                <span className="text-xs font-semibold truncate">{task.title}</span>
+              </div>
               <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: task.project.color }}
-              />
-              <span className="text-xs font-mono text-foreground/80 shrink-0">
-                {task.taskNumber}
+                className="px-2 shrink-0 text-xs text-foreground/70 truncate border-l"
+                style={{ width: ASSIGNEE_WIDTH }}
+              >
+                {task.assignee || ""}
               </span>
-              <span className="text-xs font-semibold truncate">{task.title}</span>
             </div>
           ))}
         </div>
@@ -201,6 +216,10 @@ export function GanttChart({
                 taskEnd.setHours(0, 0, 0, 0);
                 const offsetDays = daysBetween(startDate, taskStart);
                 const duration = daysBetween(taskStart, taskEnd) + 1;
+                const isOverdue =
+                  taskEnd < today &&
+                  task.status !== "完了" &&
+                  task.status !== "処理済み";
 
                 return (
                   <div
@@ -211,8 +230,9 @@ export function GanttChart({
                       top: rowIdx * ROW_HEIGHT + 6,
                       width: Math.max(duration * DAY_WIDTH - 4, 8),
                       height: ROW_HEIGHT - 12,
-                      backgroundColor:
-                        statusColors[task.status] || "#9ca3af",
+                      backgroundColor: isOverdue
+                        ? "#dc2626"
+                        : statusColors[task.status] || "#9ca3af",
                       opacity: task.status === "完了" ? 0.6 : 1,
                     }}
                     onClick={() => onTaskClick(task)}
