@@ -127,9 +127,9 @@ export function TaskForm({
         <DialogHeader>
           <DialogTitle>{task ? "課題を編集" : "課題を追加"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
               <Label>課題番号</Label>
               <Input
                 value={form.taskNumber}
@@ -139,7 +139,7 @@ export function TaskForm({
                 placeholder="PROJ-001"
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>ステータス</Label>
               <select
                 value={form.status}
@@ -153,7 +153,7 @@ export function TaskForm({
             </div>
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label>タイトル</Label>
             <Input
               value={form.title}
@@ -162,8 +162,8 @@ export function TaskForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
               <Label>プロジェクト</Label>
               <select
                 value={form.projectId}
@@ -178,7 +178,7 @@ export function TaskForm({
                 ))}
               </select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>カテゴリー</Label>
               <select
                 value={form.categoryId}
@@ -195,8 +195,8 @@ export function TaskForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
               <Label>担当者</Label>
               <Input
                 value={form.assignee}
@@ -206,8 +206,8 @@ export function TaskForm({
                 placeholder="担当者名"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <Label>開始日</Label>
                 <Input
                   type="date"
@@ -217,7 +217,7 @@ export function TaskForm({
                   }
                 />
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>期限日</Label>
                 <Input
                   type="date"
@@ -255,7 +255,7 @@ export function TaskForm({
             </div>
           )}
 
-          <div>
+          <div className="space-y-1.5">
             <Label>詳細</Label>
             <Textarea
               value={form.description}
@@ -267,7 +267,7 @@ export function TaskForm({
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label>スクリーンショット</Label>
             <div className="mt-1 grid grid-cols-3 gap-2">
               {form.screenshots.map((s, i) => (
