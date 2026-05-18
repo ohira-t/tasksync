@@ -8,6 +8,7 @@ export type Filters = {
   status: string;
   assignee: string;
   tagId: string;
+  thisWeek: boolean;
 };
 
 const selectClass =
@@ -109,11 +110,24 @@ export function FilterBar({
         ))}
       </select>
 
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={filters.thisWeek}
+          onChange={(e) =>
+            onChange({ ...filters, thisWeek: e.target.checked })
+          }
+          className="h-3.5 w-3.5 rounded border-input accent-foreground"
+        />
+        <span className="text-xs whitespace-nowrap">今週</span>
+      </label>
+
       {(filters.projectId ||
         filters.categoryId ||
         filters.status ||
         filters.assignee ||
-        filters.tagId) && (
+        filters.tagId ||
+        filters.thisWeek) && (
         <button
           onClick={() =>
             onChange({
@@ -122,6 +136,7 @@ export function FilterBar({
               status: "",
               assignee: "",
               tagId: "",
+              thisWeek: false,
             })
           }
           className="text-xs text-muted-foreground hover:text-foreground"

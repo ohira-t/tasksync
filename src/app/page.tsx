@@ -26,6 +26,7 @@ export default function Home() {
     status: "",
     assignee: "",
     tagId: "",
+    thisWeek: false,
   });
 
   const fetchAll = useCallback(async () => {
@@ -70,6 +71,20 @@ export default function Home() {
         !t.tags.some(({ tag }) => tag.id === filters.tagId)
       )
         return false;
+      if (filters.thisWeek) {
+        if (!t.startDate || !t.dueDate) return false;
+        const now = new Date();
+        const day = now.getDay();
+        const mon = new Date(now);
+        mon.setDate(mon.getDate() - ((day + 6) % 7));
+        mon.setHours(0, 0, 0, 0);
+        const sun = new Date(mon);
+        sun.setDate(sun.getDate() + 6);
+        sun.setHours(23, 59, 59, 999);
+        const start = new Date(t.startDate);
+        const due = new Date(t.dueDate);
+        if (due < mon || start > sun) return false;
+      }
       return true;
     });
   }, [tasks, filters]);
