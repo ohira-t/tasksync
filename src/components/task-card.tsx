@@ -63,7 +63,7 @@ export function TaskCard({
             <img
               src={mainShot.url}
               alt=""
-              className="h-40 w-full object-cover"
+              className="h-40 w-full object-contain"
             />
           </div>
           {subShots.length > 0 && (

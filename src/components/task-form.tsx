@@ -307,7 +307,7 @@ export function TaskForm({
                   <img
                     src={form.mainScreenshot.url}
                     alt=""
-                    className="h-40 w-full rounded-lg object-cover border"
+                    className="h-40 w-full rounded-lg object-contain border bg-muted"
                   />
                   <button
                     type="button"
