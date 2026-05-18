@@ -40,7 +40,7 @@ export function FilterBar({
         onValueChange={(v) =>
           onChange({
             ...filters,
-            projectId: v === "all" ? "" : v,
+            projectId: !v || v === "all" ? "" : v,
             categoryId: "",
           })
         }
@@ -68,7 +68,7 @@ export function FilterBar({
         <Select
           value={filters.categoryId || "all"}
           onValueChange={(v) =>
-            onChange({ ...filters, categoryId: v === "all" ? "" : v })
+            onChange({ ...filters, categoryId: !v || v === "all" ? "" : v })
           }
         >
           <SelectTrigger className="w-[140px] h-8 text-xs">
@@ -88,7 +88,7 @@ export function FilterBar({
       <Select
         value={filters.status || "all"}
         onValueChange={(v) =>
-          onChange({ ...filters, status: v === "all" ? "" : v })
+          onChange({ ...filters, status: !v || v === "all" ? "" : v })
         }
       >
         <SelectTrigger className="w-[120px] h-8 text-xs">
@@ -108,7 +108,7 @@ export function FilterBar({
         <Select
           value={filters.assignee || "all"}
           onValueChange={(v) =>
-            onChange({ ...filters, assignee: v === "all" ? "" : v })
+            onChange({ ...filters, assignee: !v || v === "all" ? "" : v })
           }
         >
           <SelectTrigger className="w-[120px] h-8 text-xs">
