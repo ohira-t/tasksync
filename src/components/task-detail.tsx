@@ -39,16 +39,16 @@ export function TaskDetail({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pr-8">
             <span
-              className="inline-block h-3 w-3 rounded-full"
+              className="inline-block h-3 w-3 rounded-full shrink-0"
               style={{ backgroundColor: task.project.color }}
             />
             <span className="text-sm text-muted-foreground font-mono">
               {task.taskNumber}
             </span>
             <span
-              className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[task.status] || "bg-gray-100"}`}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${statusColors[task.status] || "bg-gray-100"}`}
             >
               {task.status}
             </span>
