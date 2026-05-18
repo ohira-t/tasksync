@@ -12,9 +12,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Trash2, Check, X } from "lucide-react";
-
-type EditingItem = { id: string; name: string; color?: string } | null;
+import {
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 
 function InlineEdit({
   item,
@@ -23,6 +28,10 @@ function InlineEdit({
   onSave,
   onDelete,
   onCancel,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
   showColor,
 }: {
   item: { id: string; name: string; color?: string };
@@ -31,6 +40,10 @@ function InlineEdit({
   onSave: (name: string, color?: string) => void;
   onDelete: () => void;
   onCancel: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
   showColor?: boolean;
 }) {
   const [name, setName] = useState(item.name);
@@ -70,14 +83,30 @@ function InlineEdit({
   }
 
   return (
-    <div className="group flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-muted/50 transition-colors">
+    <div className="group flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs hover:bg-muted/50 transition-colors">
+      <div className="flex flex-col mr-0.5">
+        <button
+          onClick={onMoveUp}
+          disabled={isFirst}
+          className="p-0 leading-none text-muted-foreground hover:text-foreground disabled:opacity-20 disabled:cursor-default"
+        >
+          <ChevronUp className="h-3 w-3" />
+        </button>
+        <button
+          onClick={onMoveDown}
+          disabled={isLast}
+          className="p-0 leading-none text-muted-foreground hover:text-foreground disabled:opacity-20 disabled:cursor-default"
+        >
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      </div>
       {showColor && (
         <span
           className="h-2.5 w-2.5 rounded-full shrink-0"
           style={{ backgroundColor: item.color }}
         />
       )}
-      <span className="flex-1">{item.name}</span>
+      <span className="flex-1 ml-0.5">{item.name}</span>
       <button
         onClick={onStartEdit}
         className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity"
@@ -117,6 +146,19 @@ export function SettingsPanel({
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string | null>(null);
 
+  async function reorder(
+    type: "project" | "category" | "tag",
+    id: string,
+    direction: "up" | "down"
+  ) {
+    await fetch("/api/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, id, direction }),
+    });
+    onRefresh();
+  }
+
   async function addProject() {
     if (!projectName) return;
     await fetch("/api/projects", {
@@ -139,7 +181,8 @@ export function SettingsPanel({
   }
 
   async function deleteProject(id: string) {
-    if (!confirm("このプロジェクトを削除しますか？関連する課題も影響を受けます。")) return;
+    if (!confirm("このプロジェクトを削除しますか？関連する課題も影響を受けます。"))
+      return;
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
     onRefresh();
   }
@@ -149,7 +192,10 @@ export function SettingsPanel({
     await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: categoryName, projectId: categoryProjectId }),
+      body: JSON.stringify({
+        name: categoryName,
+        projectId: categoryProjectId,
+      }),
     });
     setCategoryName("");
     onRefresh();
@@ -228,7 +274,7 @@ export function SettingsPanel({
             </div>
             {projects.length > 0 && (
               <div className="space-y-1.5">
-                {projects.map((p) => (
+                {projects.map((p, i) => (
                   <div key={p.id}>
                     <InlineEdit
                       item={p}
@@ -237,12 +283,15 @@ export function SettingsPanel({
                       onSave={(name, color) => updateProject(p.id, name, color)}
                       onDelete={() => deleteProject(p.id)}
                       onCancel={() => setEditingProject(null)}
+                      onMoveUp={() => reorder("project", p.id, "up")}
+                      onMoveDown={() => reorder("project", p.id, "down")}
+                      isFirst={i === 0}
+                      isLast={i === projects.length - 1}
                       showColor
                     />
-                    {/* Categories under project */}
                     {p.categories.length > 0 && (
-                      <div className="ml-5 mt-1 space-y-1">
-                        {p.categories.map((c) => (
+                      <div className="ml-7 mt-1 space-y-1">
+                        {p.categories.map((c, ci) => (
                           <InlineEdit
                             key={c.id}
                             item={c}
@@ -251,6 +300,12 @@ export function SettingsPanel({
                             onSave={(name) => updateCategory(c.id, name)}
                             onDelete={() => deleteCategory(c.id)}
                             onCancel={() => setEditingCategory(null)}
+                            onMoveUp={() => reorder("category", c.id, "up")}
+                            onMoveDown={() =>
+                              reorder("category", c.id, "down")
+                            }
+                            isFirst={ci === 0}
+                            isLast={ci === p.categories.length - 1}
                           />
                         ))}
                       </div>
@@ -317,7 +372,7 @@ export function SettingsPanel({
             </div>
             {tags.length > 0 && (
               <div className="space-y-1.5">
-                {tags.map((t) => (
+                {tags.map((t, i) => (
                   <InlineEdit
                     key={t.id}
                     item={t}
@@ -326,6 +381,10 @@ export function SettingsPanel({
                     onSave={(name, color) => updateTag(t.id, name, color)}
                     onDelete={() => deleteTag(t.id)}
                     onCancel={() => setEditingTag(null)}
+                    onMoveUp={() => reorder("tag", t.id, "up")}
+                    onMoveDown={() => reorder("tag", t.id, "down")}
+                    isFirst={i === 0}
+                    isLast={i === tags.length - 1}
                     showColor
                   />
                 ))}

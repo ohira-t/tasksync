@@ -2,12 +2,14 @@ export type Project = {
   id: string;
   name: string;
   color: string;
+  sortOrder: number;
   categories: Category[];
 };
 
 export type Category = {
   id: string;
   name: string;
+  sortOrder: number;
   projectId: string;
 };
 
@@ -15,6 +17,7 @@ export type Tag = {
   id: string;
   name: string;
   color: string;
+  sortOrder: number;
 };
 
 export type Screenshot = {
