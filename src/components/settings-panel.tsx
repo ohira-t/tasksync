@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Project, Tag } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,13 @@ function InlineEdit({
 }) {
   const [name, setName] = useState(item.name);
   const [color, setColor] = useState(item.color || "#6366f1");
+
+  useEffect(() => {
+    if (editing) {
+      setName(item.name);
+      setColor(item.color || "#6366f1");
+    }
+  }, [editing, item.name, item.color]);
 
   if (editing) {
     return (
