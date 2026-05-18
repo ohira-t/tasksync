@@ -332,7 +332,7 @@ export function SettingsPanel({
               <select
                 value={categoryProjectId}
                 onChange={(e) => setCategoryProjectId(e.target.value)}
-                className="rounded-md border px-2 py-1 text-sm"
+                className="rounded-md border pl-2.5 pr-8 py-1 text-sm"
               >
                 <option value="">プロジェクト選択</option>
                 {projects.map((p) => (

@@ -144,7 +144,7 @@ export function TaskForm({
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-8 py-1 text-sm shadow-xs"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -170,7 +170,7 @@ export function TaskForm({
                 onChange={(e) =>
                   setForm({ ...form, projectId: e.target.value, categoryId: "" })
                 }
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-8 py-1 text-sm shadow-xs"
               >
                 <option value="">選択してください</option>
                 {projects.map((p) => (
@@ -185,7 +185,7 @@ export function TaskForm({
                 onChange={(e) =>
                   setForm({ ...form, categoryId: e.target.value })
                 }
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-8 py-1 text-sm shadow-xs"
               >
                 <option value="">なし</option>
                 {selectedProject?.categories.map((c) => (

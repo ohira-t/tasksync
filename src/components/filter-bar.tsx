@@ -11,7 +11,7 @@ export type Filters = {
 };
 
 const selectClass =
-  "h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50";
+  "h-8 rounded-md border border-input bg-transparent pl-2.5 pr-8 py-1 text-xs shadow-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50";
 
 export function FilterBar({
   filters,
