@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { ScreenshotCarousel } from "./screenshot-carousel";
 
 const statusColors: Record<string, string> = {
-  未着手: "bg-gray-200 text-gray-700",
-  進行中: "bg-blue-100 text-blue-700",
-  レビュー: "bg-yellow-100 text-yellow-700",
+  未対応: "bg-gray-200 text-gray-700",
+  処理中: "bg-blue-100 text-blue-700",
+  "途中で停止中": "bg-yellow-100 text-yellow-700",
+  "プルリク依頼中": "bg-purple-100 text-purple-700",
+  処理済み: "bg-emerald-100 text-emerald-700",
   完了: "bg-green-100 text-green-700",
 };
 

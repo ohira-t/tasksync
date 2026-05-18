@@ -34,7 +34,7 @@ const emptyForm: FormData = {
   taskNumber: "",
   title: "",
   assignee: "",
-  status: "未着手",
+  status: "未対応",
   description: "",
   startDate: "",
   dueDate: "",
@@ -123,7 +123,7 @@ export function TaskForm({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{task ? "課題を編集" : "課題を追加"}</DialogTitle>
         </DialogHeader>

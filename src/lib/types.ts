@@ -46,4 +46,4 @@ export type Task = {
   updatedAt: string;
 };
 
-export const STATUSES = ["未着手", "進行中", "レビュー", "完了"] as const;
+export const STATUSES = ["未対応", "処理中", "途中で停止中", "プルリク依頼中", "処理済み", "完了"] as const;

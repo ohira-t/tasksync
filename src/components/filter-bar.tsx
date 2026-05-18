@@ -1,14 +1,6 @@
 "use client";
 
 import { Project, Tag, STATUSES } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export type Filters = {
   projectId: string;
@@ -17,6 +9,9 @@ export type Filters = {
   assignee: string;
   tagId: string;
 };
+
+const selectClass =
+  "h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50";
 
 export function FilterBar({
   filters,
@@ -35,119 +30,85 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select
-        value={filters.projectId || "all"}
-        onValueChange={(v) =>
-          onChange({
-            ...filters,
-            projectId: !v || v === "all" ? "" : v,
-            categoryId: "",
-          })
+      <select
+        value={filters.projectId}
+        onChange={(e) =>
+          onChange({ ...filters, projectId: e.target.value, categoryId: "" })
         }
+        className={selectClass}
       >
-        <SelectTrigger className="w-[160px] h-8 text-xs">
-          <SelectValue placeholder="プロジェクト" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">すべてのプロジェクト</SelectItem>
-          {projects.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              <span className="flex items-center gap-2">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: p.color }}
-                />
-                {p.name}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <option value="">すべてのプロジェクト</option>
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
 
       {selectedProject && selectedProject.categories.length > 0 && (
-        <Select
-          value={filters.categoryId || "all"}
-          onValueChange={(v) =>
-            onChange({ ...filters, categoryId: !v || v === "all" ? "" : v })
+        <select
+          value={filters.categoryId}
+          onChange={(e) =>
+            onChange({ ...filters, categoryId: e.target.value })
           }
+          className={selectClass}
         >
-          <SelectTrigger className="w-[140px] h-8 text-xs">
-            <SelectValue placeholder="カテゴリー" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">すべて</SelectItem>
-            {selectedProject.categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      <Select
-        value={filters.status || "all"}
-        onValueChange={(v) =>
-          onChange({ ...filters, status: !v || v === "all" ? "" : v })
-        }
-      >
-        <SelectTrigger className="w-[120px] h-8 text-xs">
-          <SelectValue placeholder="ステータス" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">すべて</SelectItem>
-          {STATUSES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
+          <option value="">すべてのカテゴリー</option>
+          {selectedProject.categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
-        </SelectContent>
-      </Select>
-
-      {assignees.length > 0 && (
-        <Select
-          value={filters.assignee || "all"}
-          onValueChange={(v) =>
-            onChange({ ...filters, assignee: !v || v === "all" ? "" : v })
-          }
-        >
-          <SelectTrigger className="w-[120px] h-8 text-xs">
-            <SelectValue placeholder="担当者" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">すべて</SelectItem>
-            {assignees.map((a) => (
-              <SelectItem key={a} value={a}>
-                {a}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        </select>
       )}
+
+      <select
+        value={filters.status}
+        onChange={(e) =>
+          onChange({ ...filters, status: e.target.value })
+        }
+        className={selectClass}
+      >
+        <option value="">すべてのステータス</option>
+        {STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
 
       {tags.length > 0 && (
-        <div className="flex gap-1">
-          {tags.map((tag) => (
-            <Badge
-              key={tag.id}
-              variant={filters.tagId === tag.id ? "default" : "outline"}
-              className="cursor-pointer text-[10px] h-6"
-              style={
-                filters.tagId === tag.id
-                  ? { backgroundColor: tag.color, color: "white" }
-                  : {}
-              }
-              onClick={() =>
-                onChange({
-                  ...filters,
-                  tagId: filters.tagId === tag.id ? "" : tag.id,
-                })
-              }
-            >
-              {tag.name}
-            </Badge>
+        <select
+          value={filters.tagId}
+          onChange={(e) =>
+            onChange({ ...filters, tagId: e.target.value })
+          }
+          className={selectClass}
+        >
+          <option value="">すべてのタグ</option>
+          {tags.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
           ))}
-        </div>
+        </select>
+      )}
+
+      {assignees.length > 0 && (
+        <select
+          value={filters.assignee}
+          onChange={(e) =>
+            onChange({ ...filters, assignee: e.target.value })
+          }
+          className={selectClass}
+        >
+          <option value="">すべての担当者</option>
+          {assignees.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
       )}
 
       {(filters.projectId ||
