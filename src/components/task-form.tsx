@@ -23,6 +23,7 @@ type FormData = {
   assignee: string;
   status: string;
   description: string;
+  backlogUrl: string;
   startDate: string;
   dueDate: string;
   projectId: string;
@@ -38,6 +39,7 @@ const emptyForm: FormData = {
   assignee: "",
   status: "未対応",
   description: "",
+  backlogUrl: "",
   startDate: "",
   dueDate: "",
   projectId: "",
@@ -57,7 +59,7 @@ export function TaskForm({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void;
+  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; backlogUrl: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void;
   task: Task | null;
   projects: Project[];
   tags: Tag[];
@@ -78,6 +80,7 @@ export function TaskForm({
         assignee: task.assignee,
         status: task.status,
         description: task.description,
+        backlogUrl: task.backlogUrl || "",
         startDate: task.startDate ? task.startDate.slice(0, 10) : "",
         dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
         projectId: task.projectId,
@@ -191,6 +194,17 @@ export function TaskForm({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="課題のタイトル"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Backlog URL</Label>
+            <Input
+              value={form.backlogUrl}
+              onChange={(e) =>
+                setForm({ ...form, backlogUrl: e.target.value })
+              }
+              placeholder="https://xxx.backlog.jp/view/PROJ-001"
             />
           </div>
 

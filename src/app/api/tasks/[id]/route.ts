@@ -19,6 +19,7 @@ export async function PUT(
       assignee: body.assignee || "",
       status: body.status || "未対応",
       description: body.description || "",
+      backlogUrl: body.backlogUrl || "",
       startDate: body.startDate ? new Date(body.startDate) : null,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       projectId: body.projectId,

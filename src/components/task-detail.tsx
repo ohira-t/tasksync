@@ -135,6 +135,20 @@ export function TaskDetail({
             </div>
           </div>
 
+          {task.backlogUrl && (
+            <div className="text-sm">
+              <span className="text-muted-foreground">Backlog:</span>{" "}
+              <a
+                href={task.backlogUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-600 hover:underline break-all"
+              >
+                {task.backlogUrl}
+              </a>
+            </div>
+          )}
+
           {task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {task.tags.map(({ tag }) => (

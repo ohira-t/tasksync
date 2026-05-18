@@ -35,6 +35,7 @@ export type Task = {
   assignee: string;
   status: string;
   description: string;
+  backlogUrl: string;
   startDate: string | null;
   dueDate: string | null;
   projectId: string;

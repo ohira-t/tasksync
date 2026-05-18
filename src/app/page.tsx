@@ -69,6 +69,7 @@ export default function Home() {
       assignee: string;
       status: string;
       description: string;
+      backlogUrl: string;
       startDate: string;
       dueDate: string;
       projectId: string;
