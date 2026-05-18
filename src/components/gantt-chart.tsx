@@ -36,7 +36,14 @@ export function GanttChart({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const ganttTasks = useMemo(
-    () => tasks.filter((t) => t.startDate && t.dueDate),
+    () =>
+      tasks
+        .filter((t) => t.startDate && t.dueDate)
+        .sort((a, b) => {
+          const dueDiff = new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime();
+          if (dueDiff !== 0) return dueDiff;
+          return new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime();
+        }),
     [tasks]
   );
 
