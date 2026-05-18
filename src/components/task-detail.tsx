@@ -37,8 +37,9 @@ export function TaskDetail({
 
   if (!task) return null;
 
-  const mainShot = task.screenshots.find((s) => s.isMain);
-  const subShots = task.screenshots.filter((s) => !s.isMain);
+  const explicit = task.screenshots.find((s) => s.isMain);
+  const mainShot = explicit || task.screenshots[0] || null;
+  const subShots = task.screenshots.filter((s) => s !== mainShot);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
