@@ -58,7 +58,7 @@ export function TaskDetail({
               {task.status}
             </span>
           </div>
-          <DialogTitle className="text-lg">{task.title}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{task.title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

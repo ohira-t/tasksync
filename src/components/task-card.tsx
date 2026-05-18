@@ -27,16 +27,24 @@ export function TaskCard({
       className="group cursor-pointer rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
       onClick={onClick}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: task.project.color }}
-          />
-          <span className="text-xs text-muted-foreground font-mono">
-            {task.taskNumber}
-          </span>
-        </div>
+      <div className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span
+          className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: task.project.color }}
+        />
+        <span className="font-medium truncate">{task.project.name}</span>
+        {task.category && (
+          <>
+            <span>/</span>
+            <span className="truncate">{task.category.name}</span>
+          </>
+        )}
+      </div>
+
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground font-mono">
+          {task.taskNumber}
+        </span>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[task.status] || "bg-gray-100"}`}
         >
@@ -44,7 +52,7 @@ export function TaskCard({
         </span>
       </div>
 
-      <h3 className="mb-2 text-sm font-semibold leading-tight line-clamp-2">
+      <h3 className="mb-2 text-[15px] font-semibold leading-tight line-clamp-2">
         {task.title}
       </h3>
 
