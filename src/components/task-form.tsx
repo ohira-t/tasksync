@@ -107,16 +107,26 @@ export function TaskForm({
     if (!file) return;
     setUploading(true);
     setUploadTarget("main");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json();
-    setForm((prev) => ({
-      ...prev,
-      mainScreenshot: { url: data.url, caption: "", isMain: true },
-    }));
-    setUploading(false);
-    if (mainFileRef.current) mainFileRef.current.value = "";
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "アップロードに失敗しました");
+        return;
+      }
+      const data = await res.json();
+      setForm((prev) => ({
+        ...prev,
+        mainScreenshot: { url: data.url, caption: "", isMain: true },
+      }));
+    } catch {
+      alert("アップロードに失敗しました");
+    } finally {
+      setUploading(false);
+      if (mainFileRef.current) mainFileRef.current.value = "";
+    }
   }
 
   async function handleSubUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -124,36 +134,46 @@ export function TaskForm({
     if (!files?.length) return;
     setUploading(true);
     setUploadTarget("sub");
-    const newSubs: ScreenshotInput[] = [];
-    for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      newSubs.push({ url: data.url, caption: "", isMain: false });
+    try {
+      const newSubs: ScreenshotInput[] = [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "アップロードに失敗しました");
+          continue;
+        }
+        const data = await res.json();
+        newSubs.push({ url: data.url, caption: "", isMain: false });
+      }
+      setForm((prev) => {
+        const combined = [...prev.subScreenshots, ...newSubs].slice(0, 5);
+        return { ...prev, subScreenshots: combined };
+      });
+    } catch {
+      alert("アップロードに失敗しました");
+    } finally {
+      setUploading(false);
+      if (subFileRef.current) subFileRef.current.value = "";
     }
-    setForm((prev) => {
-      const combined = [...prev.subScreenshots, ...newSubs].slice(0, 5);
-      return { ...prev, subScreenshots: combined };
-    });
-    setUploading(false);
-    if (subFileRef.current) subFileRef.current.value = "";
   }
 
   function removeSubScreenshot(idx: number) {
-    setForm({
-      ...form,
-      subScreenshots: form.subScreenshots.filter((_, i) => i !== idx),
-    });
+    setForm((prev) => ({
+      ...prev,
+      subScreenshots: prev.subScreenshots.filter((_, i) => i !== idx),
+    }));
   }
 
   function toggleTag(tagId: string) {
-    setForm({
-      ...form,
-      tagIds: form.tagIds.includes(tagId)
-        ? form.tagIds.filter((id) => id !== tagId)
-        : [...form.tagIds, tagId],
-    });
+    setForm((prev) => ({
+      ...prev,
+      tagIds: prev.tagIds.includes(tagId)
+        ? prev.tagIds.filter((id) => id !== tagId)
+        : [...prev.tagIds, tagId],
+    }));
   }
 
   return (

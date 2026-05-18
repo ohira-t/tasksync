@@ -39,7 +39,7 @@ export function TaskDetail({
 
   const explicit = task.screenshots.find((s) => s.isMain);
   const mainShot = explicit || task.screenshots[0] || null;
-  const subShots = task.screenshots.filter((s) => s !== mainShot);
+  const subShots = task.screenshots.filter((s) => s.id !== mainShot?.id);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -135,7 +135,7 @@ export function TaskDetail({
             </div>
           </div>
 
-          {task.backlogUrl && (
+          {task.backlogUrl && /^https?:\/\//i.test(task.backlogUrl) && (
             <div className="text-sm">
               <span className="text-muted-foreground">Backlog:</span>{" "}
               <a

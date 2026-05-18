@@ -39,13 +39,13 @@ export function GanttChart({
     [tasks]
   );
 
-  const { startDate, totalDays, dates } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(today);
+  const { startDate, totalDays, dates, today, todayOffset } = useMemo(() => {
+    const td = new Date();
+    td.setHours(0, 0, 0, 0);
+    const start = new Date(td);
     start.setDate(start.getDate() - 7);
 
-    let end = new Date(today);
+    let end = new Date(td);
     end.setDate(end.getDate() + 30);
 
     for (const t of ganttTasks) {
@@ -61,7 +61,13 @@ export function GanttChart({
       dateArr.push(d);
     }
 
-    return { startDate: start, totalDays: total, dates: dateArr };
+    return {
+      startDate: start,
+      totalDays: total,
+      dates: dateArr,
+      today: td,
+      todayOffset: daysBetween(start, td),
+    };
   }, [ganttTasks]);
 
   useEffect(() => {
@@ -69,10 +75,6 @@ export function GanttChart({
       scrollRef.current.scrollLeft = 7 * DAY_WIDTH - 20;
     }
   }, []);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayOffset = daysBetween(startDate, today);
 
   if (ganttTasks.length === 0) {
     return (
@@ -84,6 +86,8 @@ export function GanttChart({
       </div>
     );
   }
+
+  const bodyHeight = ganttTasks.length * ROW_HEIGHT;
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
@@ -110,10 +114,10 @@ export function GanttChart({
                 className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: task.project.color }}
               />
-              <span className="text-xs font-mono text-muted-foreground shrink-0">
+              <span className="text-xs font-mono text-foreground/60 shrink-0">
                 {task.taskNumber}
               </span>
-              <span className="text-xs truncate">{task.title}</span>
+              <span className="text-xs font-medium truncate">{task.title}</span>
             </div>
           ))}
         </div>
@@ -133,14 +137,14 @@ export function GanttChart({
                 return (
                   <div
                     key={i}
-                    className={`shrink-0 flex flex-col items-center justify-center border-r text-[10px] ${
+                    className={`shrink-0 flex flex-col items-center justify-center border-r border-border/60 text-[10px] font-medium ${
                       isToday
-                        ? "bg-blue-50 font-bold text-blue-700"
+                        ? "bg-blue-100 font-bold text-blue-800"
                         : isSun
-                          ? "text-red-400 bg-red-50/50"
+                          ? "text-red-500 bg-red-50/70"
                           : isSat
-                            ? "text-blue-400 bg-blue-50/30"
-                            : "text-muted-foreground"
+                            ? "text-blue-500 bg-blue-50/50"
+                            : "text-foreground/70"
                     }`}
                     style={{ width: DAY_WIDTH }}
                   >
@@ -153,67 +157,73 @@ export function GanttChart({
               })}
             </div>
 
-            {/* Task bars */}
-            {ganttTasks.map((task) => {
-              const taskStart = new Date(task.startDate!);
-              taskStart.setHours(0, 0, 0, 0);
-              const taskEnd = new Date(task.dueDate!);
-              taskEnd.setHours(0, 0, 0, 0);
-              const offsetDays = daysBetween(startDate, taskStart);
-              const duration = daysBetween(taskStart, taskEnd) + 1;
-
-              return (
-                <div
-                  key={task.id}
-                  className="relative border-b"
-                  style={{ height: ROW_HEIGHT }}
-                >
-                  {/* Grid lines */}
-                  {dates.map((d, i) => {
-                    const isSun = d.getDay() === 0;
-                    const isSat = d.getDay() === 6;
-                    const isToday = d.getTime() === today.getTime();
-                    return (
-                      <div
-                        key={i}
-                        className={`absolute top-0 bottom-0 border-r ${
-                          isToday
-                            ? "bg-blue-50/50"
-                            : isSun
-                              ? "bg-red-50/30"
-                              : isSat
-                                ? "bg-blue-50/20"
-                                : ""
-                        }`}
-                        style={{ left: i * DAY_WIDTH, width: DAY_WIDTH }}
-                      />
-                    );
-                  })}
-                  {/* Today line */}
+            {/* Grid background + today line (rendered once) */}
+            <div className="relative" style={{ height: bodyHeight }}>
+              {dates.map((d, i) => {
+                const isSun = d.getDay() === 0;
+                const isSat = d.getDay() === 6;
+                const isToday = d.getTime() === today.getTime();
+                return (
                   <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
-                    style={{ left: todayOffset * DAY_WIDTH + DAY_WIDTH / 2 }}
+                    key={i}
+                    className={`absolute top-0 bottom-0 border-r border-border/40 ${
+                      isToday
+                        ? "bg-blue-100/60"
+                        : isSun
+                          ? "bg-red-50/60"
+                          : isSat
+                            ? "bg-blue-50/40"
+                            : ""
+                    }`}
+                    style={{ left: i * DAY_WIDTH, width: DAY_WIDTH }}
                   />
-                  {/* Bar */}
+                );
+              })}
+              <div
+                className="absolute top-0 bottom-0 w-[2px] bg-blue-600 z-10"
+                style={{ left: todayOffset * DAY_WIDTH + DAY_WIDTH / 2 }}
+              />
+
+              {/* Row borders */}
+              {ganttTasks.map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute left-0 right-0 border-b"
+                  style={{ top: (i + 1) * ROW_HEIGHT }}
+                />
+              ))}
+
+              {/* Task bars */}
+              {ganttTasks.map((task, rowIdx) => {
+                const taskStart = new Date(task.startDate!);
+                taskStart.setHours(0, 0, 0, 0);
+                const taskEnd = new Date(task.dueDate!);
+                taskEnd.setHours(0, 0, 0, 0);
+                const offsetDays = daysBetween(startDate, taskStart);
+                const duration = daysBetween(taskStart, taskEnd) + 1;
+
+                return (
                   <div
-                    className="absolute top-1.5 rounded cursor-pointer hover:brightness-110 transition-all"
+                    key={task.id}
+                    className="absolute rounded cursor-pointer hover:brightness-110 transition-all"
                     style={{
                       left: offsetDays * DAY_WIDTH + 2,
+                      top: rowIdx * ROW_HEIGHT + 6,
                       width: Math.max(duration * DAY_WIDTH - 4, 8),
                       height: ROW_HEIGHT - 12,
                       backgroundColor:
                         statusColors[task.status] || "#9ca3af",
-                      opacity: task.status === "完了" ? 0.5 : 0.85,
+                      opacity: task.status === "完了" ? 0.5 : 0.9,
                     }}
                     onClick={() => onTaskClick(task)}
                   >
-                    <span className="absolute inset-0 flex items-center px-1.5 text-[10px] text-white font-medium truncate">
-                      {task.title}
+                    <span className="absolute inset-0 flex items-center px-1.5 text-[10px] text-white font-semibold truncate drop-shadow-sm">
+                      {task.taskNumber}
                     </span>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

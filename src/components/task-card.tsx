@@ -21,7 +21,7 @@ export function TaskCard({
 }) {
   const explicit = task.screenshots.find((s) => s.isMain);
   const mainShot = explicit || task.screenshots[0] || null;
-  const subShots = task.screenshots.filter((s) => s !== mainShot);
+  const subShots = task.screenshots.filter((s) => s.id !== mainShot?.id);
 
   return (
     <div

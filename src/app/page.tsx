@@ -29,14 +29,22 @@ export default function Home() {
   });
 
   const fetchAll = useCallback(async () => {
-    const [tasksRes, projectsRes, tagsRes] = await Promise.all([
-      fetch("/api/tasks"),
-      fetch("/api/projects"),
-      fetch("/api/tags"),
-    ]);
-    setTasks(await tasksRes.json());
-    setProjects(await projectsRes.json());
-    setTags(await tagsRes.json());
+    try {
+      const [tasksRes, projectsRes, tagsRes] = await Promise.all([
+        fetch("/api/tasks"),
+        fetch("/api/projects"),
+        fetch("/api/tags"),
+      ]);
+      if (!tasksRes.ok || !projectsRes.ok || !tagsRes.ok) {
+        console.error("Failed to fetch data");
+        return;
+      }
+      setTasks(await tasksRes.json());
+      setProjects(await projectsRes.json());
+      setTags(await tagsRes.json());
+    } catch (e) {
+      console.error("Failed to fetch data", e);
+    }
   }, []);
 
   useEffect(() => {
@@ -53,7 +61,9 @@ export default function Home() {
       if (filters.projectId && t.projectId !== filters.projectId) return false;
       if (filters.categoryId && t.categoryId !== filters.categoryId)
         return false;
-      if (filters.status && t.status !== filters.status) return false;
+      if (filters.status === "__incomplete") {
+        if (t.status === "処理済み" || t.status === "完了") return false;
+      } else if (filters.status && t.status !== filters.status) return false;
       if (filters.assignee && t.assignee !== filters.assignee) return false;
       if (
         filters.tagId &&
@@ -81,25 +91,41 @@ export default function Home() {
     },
     id?: string
   ) {
-    const url = id ? `/api/tasks/${id}` : "/api/tasks";
-    const method = id ? "PUT" : "POST";
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    setFormOpen(false);
-    setEditingTask(null);
-    await fetchAll();
+    try {
+      const url = id ? `/api/tasks/${id}` : "/api/tasks";
+      const method = id ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        alert("保存に失敗しました");
+        return;
+      }
+      setFormOpen(false);
+      setEditingTask(null);
+      await fetchAll();
+    } catch {
+      alert("保存に失敗しました");
+    }
   }
 
   async function handleDelete() {
     if (!selectedTask) return;
     if (!confirm("この課題を削除しますか？")) return;
-    await fetch(`/api/tasks/${selectedTask.id}`, { method: "DELETE" });
-    setDetailOpen(false);
-    setSelectedTask(null);
-    await fetchAll();
+    try {
+      const res = await fetch(`/api/tasks/${selectedTask.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("削除に失敗しました");
+        return;
+      }
+      setDetailOpen(false);
+      setSelectedTask(null);
+      await fetchAll();
+    } catch {
+      alert("削除に失敗しました");
+    }
   }
 
   return (

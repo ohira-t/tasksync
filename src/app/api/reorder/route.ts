@@ -5,7 +5,6 @@ async function normalizeAndSwap(
   type: "project" | "category" | "tag",
   id: string,
   direction: "up" | "down",
-  projectId?: string
 ) {
   if (type === "project") {
     const items = await prisma.project.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
@@ -58,13 +57,21 @@ async function normalizeAndSwap(
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { type, id, direction } = body as {
-    type: "project" | "category" | "tag";
-    id: string;
-    direction: "up" | "down";
-  };
+  try {
+    const body = await req.json();
+    const { type, id, direction } = body as {
+      type: "project" | "category" | "tag";
+      id: string;
+      direction: "up" | "down";
+    };
 
-  await normalizeAndSwap(type, id, direction);
-  return NextResponse.json({ ok: true });
+    if (!["project", "category", "tag"].includes(type) || !id || !["up", "down"].includes(direction)) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    }
+
+    await normalizeAndSwap(type, id, direction);
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to reorder" }, { status: 500 });
+  }
 }

@@ -71,6 +71,7 @@ export function FilterBar({
         className={selectClass}
       >
         <option value="">すべてのステータス</option>
+        <option value="__incomplete">未完了（処理済み・完了以外）</option>
         {STATUSES.map((s) => (
           <option key={s} value={s}>
             {s}
