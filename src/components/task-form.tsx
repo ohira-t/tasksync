@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type ScreenshotInput = { url: string; caption: string };
+type ScreenshotInput = { url: string; caption: string; isMain: boolean };
 
 type FormData = {
   taskNumber: string;
@@ -27,7 +27,8 @@ type FormData = {
   projectId: string;
   categoryId: string;
   tagIds: string[];
-  screenshots: ScreenshotInput[];
+  mainScreenshot: ScreenshotInput | null;
+  subScreenshots: ScreenshotInput[];
 };
 
 const emptyForm: FormData = {
@@ -41,7 +42,8 @@ const emptyForm: FormData = {
   projectId: "",
   categoryId: "",
   tagIds: [],
-  screenshots: [],
+  mainScreenshot: null,
+  subScreenshots: [],
 };
 
 export function TaskForm({
@@ -54,17 +56,21 @@ export function TaskForm({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: FormData, id?: string) => void;
+  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void;
   task: Task | null;
   projects: Project[];
   tags: Tag[];
 }) {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadTarget, setUploadTarget] = useState<"main" | "sub">("main");
+  const mainFileRef = useRef<HTMLInputElement>(null);
+  const subFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (task) {
+      const mainShot = task.screenshots.find((s) => s.isMain);
+      const subShots = task.screenshots.filter((s) => !s.isMain);
       setForm({
         taskNumber: task.taskNumber,
         title: task.title,
@@ -76,9 +82,13 @@ export function TaskForm({
         projectId: task.projectId,
         categoryId: task.categoryId || "",
         tagIds: task.tags.map((t) => t.tag.id),
-        screenshots: task.screenshots.map((s) => ({
+        mainScreenshot: mainShot
+          ? { url: mainShot.url, caption: mainShot.caption, isMain: true }
+          : null,
+        subScreenshots: subShots.map((s) => ({
           url: s.url,
           caption: s.caption,
+          isMain: false,
         })),
       });
     } else {
@@ -88,27 +98,48 @@ export function TaskForm({
 
   const selectedProject = projects.find((p) => p.id === form.projectId);
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleMainUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadTarget("main");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    setForm((prev) => ({
+      ...prev,
+      mainScreenshot: { url: data.url, caption: "", isMain: true },
+    }));
+    setUploading(false);
+    if (mainFileRef.current) mainFileRef.current.value = "";
+  }
+
+  async function handleSubUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
-    const newScreenshots = [...form.screenshots];
+    setUploadTarget("sub");
+    const newSubs: ScreenshotInput[] = [];
     for (const file of Array.from(files)) {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
-      newScreenshots.push({ url: data.url, caption: "" });
+      newSubs.push({ url: data.url, caption: "", isMain: false });
     }
-    setForm({ ...form, screenshots: newScreenshots });
+    setForm((prev) => {
+      const combined = [...prev.subScreenshots, ...newSubs].slice(0, 5);
+      return { ...prev, subScreenshots: combined };
+    });
     setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
+    if (subFileRef.current) subFileRef.current.value = "";
   }
 
-  function removeScreenshot(idx: number) {
+  function removeSubScreenshot(idx: number) {
     setForm({
       ...form,
-      screenshots: form.screenshots.filter((_, i) => i !== idx),
+      subScreenshots: form.subScreenshots.filter((_, i) => i !== idx),
     });
   }
 
@@ -267,40 +298,80 @@ export function TaskForm({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label>スクリーンショット</Label>
-            <div className="mt-1 grid grid-cols-3 gap-2">
-              {form.screenshots.map((s, i) => (
-                <div key={i} className="relative group">
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>メイン画像（1枚）</Label>
+              {form.mainScreenshot ? (
+                <div className="relative group inline-block">
                   <img
-                    src={s.url}
+                    src={form.mainScreenshot.url}
                     alt=""
-                    className="h-24 w-full rounded-lg object-cover border"
+                    className="h-40 w-full rounded-lg object-cover border"
                   />
                   <button
                     type="button"
-                    onClick={() => removeScreenshot(i)}
+                    onClick={() =>
+                      setForm({ ...form, mainScreenshot: null })
+                    }
                     className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ×
                   </button>
                 </div>
-              ))}
+              ) : (
+                <Input
+                  ref={mainFileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMainUpload}
+                  disabled={uploading && uploadTarget === "main"}
+                />
+              )}
+              {uploading && uploadTarget === "main" && (
+                <p className="text-xs text-muted-foreground">
+                  アップロード中...
+                </p>
+              )}
             </div>
-            <Input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFileUpload}
-              className="mt-2"
-              disabled={uploading}
-            />
-            {uploading && (
-              <p className="text-xs text-muted-foreground mt-1">
-                アップロード中...
-              </p>
-            )}
+
+            <div className="space-y-1.5">
+              <Label>サブ画像（最大5枚）</Label>
+              {form.subScreenshots.length > 0 && (
+                <div className="grid grid-cols-5 gap-2">
+                  {form.subScreenshots.map((s, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={s.url}
+                        alt=""
+                        className="h-16 w-full rounded-lg object-cover border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSubScreenshot(i)}
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {form.subScreenshots.length < 5 && (
+                <Input
+                  ref={subFileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleSubUpload}
+                  disabled={uploading && uploadTarget === "sub"}
+                />
+              )}
+              {uploading && uploadTarget === "sub" && (
+                <p className="text-xs text-muted-foreground">
+                  アップロード中...
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -308,7 +379,14 @@ export function TaskForm({
               キャンセル
             </Button>
             <Button
-              onClick={() => onSave(form, task?.id)}
+              onClick={() => {
+                const screenshots: { url: string; caption: string; isMain: boolean }[] = [];
+                if (form.mainScreenshot) {
+                  screenshots.push(form.mainScreenshot);
+                }
+                screenshots.push(...form.subScreenshots);
+                onSave({ ...form, screenshots }, task?.id);
+              }}
               disabled={!form.taskNumber || !form.title || !form.projectId}
             >
               {task ? "更新" : "追加"}

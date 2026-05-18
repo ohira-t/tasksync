@@ -2,7 +2,6 @@
 
 import { Task } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { ScreenshotCarousel } from "./screenshot-carousel";
 
 const statusColors: Record<string, string> = {
   未対応: "bg-gray-200 text-gray-700",
@@ -20,6 +19,9 @@ export function TaskCard({
   task: Task;
   onClick: () => void;
 }) {
+  const mainShot = task.screenshots.find((s) => s.isMain);
+  const subShots = task.screenshots.filter((s) => !s.isMain);
+
   return (
     <div
       className="group cursor-pointer rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -46,7 +48,33 @@ export function TaskCard({
         {task.title}
       </h3>
 
-      <ScreenshotCarousel screenshots={task.screenshots} />
+      {mainShot ? (
+        <div className="space-y-1.5">
+          <div className="overflow-hidden rounded-lg bg-muted">
+            <img
+              src={mainShot.url}
+              alt=""
+              className="h-40 w-full object-cover"
+            />
+          </div>
+          {subShots.length > 0 && (
+            <div className="flex gap-1">
+              {subShots.map((s) => (
+                <img
+                  key={s.id}
+                  src={s.url}
+                  alt=""
+                  className="h-10 w-10 rounded object-cover border"
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex h-32 items-center justify-center rounded-lg bg-muted text-muted-foreground text-xs">
+          画像なし
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {task.assignee && (

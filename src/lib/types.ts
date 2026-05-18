@@ -25,6 +25,7 @@ export type Screenshot = {
   url: string;
   caption: string;
   order: number;
+  isMain: boolean;
 };
 
 export type Task = {

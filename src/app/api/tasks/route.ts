@@ -33,10 +33,11 @@ export async function POST(req: Request) {
       screenshots: body.screenshots?.length
         ? {
             create: body.screenshots.map(
-              (s: { url: string; caption?: string }, i: number) => ({
+              (s: { url: string; caption?: string; isMain?: boolean }, i: number) => ({
                 url: s.url,
                 caption: s.caption || "",
                 order: i,
+                isMain: s.isMain || false,
               })
             ),
           }

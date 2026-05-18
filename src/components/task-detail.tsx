@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Task } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScreenshotCarousel } from "./screenshot-carousel";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,12 @@ export function TaskDetail({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+
   if (!task) return null;
+
+  const mainShot = task.screenshots.find((s) => s.isMain);
+  const subShots = task.screenshots.filter((s) => !s.isMain);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -57,7 +62,50 @@ export function TaskDetail({
         </DialogHeader>
 
         <div className="space-y-4">
-          <ScreenshotCarousel screenshots={task.screenshots} />
+          {mainShot ? (
+            <div className="space-y-2">
+              <div
+                className="overflow-hidden rounded-lg bg-muted cursor-pointer"
+                onClick={() => setViewingImage(mainShot.url)}
+              >
+                <img
+                  src={mainShot.url}
+                  alt={mainShot.caption || "メイン画像"}
+                  className="h-64 w-full object-contain"
+                />
+              </div>
+              {subShots.length > 0 && (
+                <div className="flex gap-2">
+                  {subShots.map((s) => (
+                    <img
+                      key={s.id}
+                      src={s.url}
+                      alt={s.caption || ""}
+                      className="h-16 w-16 rounded-lg object-cover border cursor-pointer hover:ring-2 hover:ring-ring transition-shadow"
+                      onClick={() => setViewingImage(s.url)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex h-48 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">
+              スクリーンショットなし
+            </div>
+          )}
+
+          {viewingImage && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 cursor-pointer"
+              onClick={() => setViewingImage(null)}
+            >
+              <img
+                src={viewingImage}
+                alt=""
+                className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>

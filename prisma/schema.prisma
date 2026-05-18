@@ -62,10 +62,11 @@ model TaskTag {
 }
 
 model Screenshot {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   url      String
-  caption  String @default("")
-  order    Int    @default(0)
+  caption  String  @default("")
+  order    Int     @default(0)
+  isMain   Boolean @default(false)
   taskId   String
-  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }

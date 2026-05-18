@@ -74,7 +74,7 @@ export default function Home() {
       projectId: string;
       categoryId: string;
       tagIds: string[];
-      screenshots: { url: string; caption: string }[];
+      screenshots: { url: string; caption: string; isMain: boolean }[];
     },
     id?: string
   ) {
