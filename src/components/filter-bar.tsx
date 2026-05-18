@@ -27,6 +27,9 @@ export function FilterBar({
   assignees: string[];
 }) {
   const selectedProject = projects.find((p) => p.id === filters.projectId);
+  const categories = selectedProject
+    ? selectedProject.categories
+    : projects.flatMap((p) => p.categories);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -45,22 +48,20 @@ export function FilterBar({
         ))}
       </select>
 
-      {selectedProject && selectedProject.categories.length > 0 && (
-        <select
-          value={filters.categoryId}
-          onChange={(e) =>
-            onChange({ ...filters, categoryId: e.target.value })
-          }
-          className={selectClass}
-        >
-          <option value="">すべてのカテゴリー</option>
-          {selectedProject.categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      )}
+      <select
+        value={filters.categoryId}
+        onChange={(e) =>
+          onChange({ ...filters, categoryId: e.target.value })
+        }
+        className={selectClass}
+      >
+        <option value="">すべてのカテゴリー</option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
 
       <select
         value={filters.status}
@@ -77,39 +78,35 @@ export function FilterBar({
         ))}
       </select>
 
-      {tags.length > 0 && (
-        <select
-          value={filters.tagId}
-          onChange={(e) =>
-            onChange({ ...filters, tagId: e.target.value })
-          }
-          className={selectClass}
-        >
-          <option value="">すべてのタグ</option>
-          {tags.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      )}
+      <select
+        value={filters.tagId}
+        onChange={(e) =>
+          onChange({ ...filters, tagId: e.target.value })
+        }
+        className={selectClass}
+      >
+        <option value="">すべてのタグ</option>
+        {tags.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
 
-      {assignees.length > 0 && (
-        <select
-          value={filters.assignee}
-          onChange={(e) =>
-            onChange({ ...filters, assignee: e.target.value })
-          }
-          className={selectClass}
-        >
-          <option value="">すべての担当者</option>
-          {assignees.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-      )}
+      <select
+        value={filters.assignee}
+        onChange={(e) =>
+          onChange({ ...filters, assignee: e.target.value })
+        }
+        className={selectClass}
+      >
+        <option value="">すべての担当者</option>
+        {assignees.map((a) => (
+          <option key={a} value={a}>
+            {a}
+          </option>
+        ))}
+      </select>
 
       {(filters.projectId ||
         filters.categoryId ||

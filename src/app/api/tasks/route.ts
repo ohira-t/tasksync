@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       taskNumber: body.taskNumber,
       title: body.title,
       assignee: body.assignee || "",
-      status: body.status || "未着手",
+      status: body.status || "未対応",
       description: body.description || "",
       startDate: body.startDate ? new Date(body.startDate) : null,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
