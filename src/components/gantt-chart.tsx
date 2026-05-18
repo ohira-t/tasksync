@@ -139,7 +139,7 @@ export function GanttChart({
                     key={i}
                     className={`shrink-0 flex flex-col items-center justify-center border-r border-border/60 text-[10px] font-medium ${
                       isToday
-                        ? "bg-blue-100 font-bold text-blue-800"
+                        ? "bg-green-100 font-bold text-green-800"
                         : isSun
                           ? "text-red-500 bg-red-50/70"
                           : isSat
@@ -168,7 +168,7 @@ export function GanttChart({
                     key={i}
                     className={`absolute top-0 bottom-0 border-r border-border/40 ${
                       isToday
-                        ? "bg-blue-100/60"
+                        ? "bg-green-100/60"
                         : isSun
                           ? "bg-red-50/60"
                           : isSat
@@ -180,7 +180,7 @@ export function GanttChart({
                 );
               })}
               <div
-                className="absolute top-0 bottom-0 w-[2px] bg-blue-600 z-10"
+                className="absolute top-0 bottom-0 w-[2px] bg-green-600 z-10"
                 style={{ left: todayOffset * DAY_WIDTH + DAY_WIDTH / 2 }}
               />
 
