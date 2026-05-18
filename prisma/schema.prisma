@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#6366f1")
+  createdAt DateTime @default(now())
+  tasks     Task[]
+  categories Category[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  color String @default("#8b5cf6")
+  tasks TaskTag[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  taskNumber  String
+  title       String
+  assignee    String   @default("")
+  status      String   @default("未着手")
+  description String   @default("")
+  startDate   DateTime?
+  dueDate     DateTime?
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags        TaskTag[]
+  screenshots Screenshot[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TaskTag {
+  taskId String
+  tagId  String
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([taskId, tagId])
+}
+
+model Screenshot {
+  id       String @id @default(cuid())
+  url      String
+  caption  String @default("")
+  order    Int    @default(0)
+  taskId   String
+  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
