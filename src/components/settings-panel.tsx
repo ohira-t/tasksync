@@ -267,7 +267,7 @@ export function SettingsPanel({
                 onChange={(e) => setProjectName(e.target.value)}
                 placeholder="プロジェクト名"
                 className="flex-1"
-                onKeyDown={(e) => e.key === "Enter" && addProject()}
+                onKeyDown={(e) => e.key === "Enter" && !(e.nativeEvent as KeyboardEvent).isComposing && addProject()}
               />
               <Input
                 type="color"
@@ -346,7 +346,7 @@ export function SettingsPanel({
                 onChange={(e) => setCategoryName(e.target.value)}
                 placeholder="カテゴリー名"
                 className="flex-1"
-                onKeyDown={(e) => e.key === "Enter" && addCategory()}
+                onKeyDown={(e) => e.key === "Enter" && !(e.nativeEvent as KeyboardEvent).isComposing && addCategory()}
               />
               <Button size="sm" onClick={addCategory}>
                 追加
@@ -365,7 +365,7 @@ export function SettingsPanel({
                 onChange={(e) => setTagName(e.target.value)}
                 placeholder="タグ名"
                 className="flex-1"
-                onKeyDown={(e) => e.key === "Enter" && addTag()}
+                onKeyDown={(e) => e.key === "Enter" && !(e.nativeEvent as KeyboardEvent).isComposing && addTag()}
               />
               <Input
                 type="color"
