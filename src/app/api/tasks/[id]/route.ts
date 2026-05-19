@@ -8,6 +8,29 @@ function sanitizeUrl(url: string): string {
   return /^https?:\/\//i.test(url) ? url : "";
 }
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const task = await prisma.task.update({
+      where: { id },
+      data: { starred: Boolean(body.starred) },
+      include: {
+        project: true,
+        category: true,
+        tags: { include: { tag: true } },
+        screenshots: { orderBy: { order: "asc" } },
+      },
+    });
+    return NextResponse.json(task);
+  } catch {
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+  }
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
