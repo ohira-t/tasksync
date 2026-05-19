@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Project, Tag } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,6 +152,9 @@ export function SettingsPanel({
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   async function reorder(
     type: "project" | "category" | "tag",
@@ -249,6 +252,30 @@ export function SettingsPanel({
     if (!confirm("このタグを削除しますか？")) return;
     await fetch(`/api/tags/${id}`, { method: "DELETE" });
     onRefresh();
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/tasks/import", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportResult(`エラー: ${data.error}`);
+      } else {
+        setImportResult(`${data.updated}件 更新 / ${data.skipped}件 スキップ（全${data.total}件中）`);
+        onRefresh();
+      }
+    } catch {
+      setImportResult("インポートに失敗しました");
+    } finally {
+      setImporting(false);
+      if (importFileRef.current) importFileRef.current.value = "";
+    }
   }
 
   return (
@@ -396,6 +423,32 @@ export function SettingsPanel({
                   />
                 ))}
               </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Backlog Import */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Backlog CSV インポート</Label>
+            <p className="text-xs text-muted-foreground">
+              Backlog からエクスポートした CSV をアップロードすると、課題キーが一致するタスクのステータス・開始日・期限日を更新します。
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                ref={importFileRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImport}
+                disabled={importing}
+                className="flex-1"
+              />
+            </div>
+            {importing && (
+              <p className="text-xs text-muted-foreground">インポート中...</p>
+            )}
+            {importResult && (
+              <p className="text-xs text-foreground font-medium">{importResult}</p>
             )}
           </div>
         </div>
