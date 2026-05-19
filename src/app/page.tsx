@@ -143,6 +143,44 @@ export default function Home() {
     }
   }
 
+  function downloadCsv(rows: Task[]) {
+    const headers = [
+      "課題番号", "タイトル", "ステータス", "プロジェクト", "カテゴリー",
+      "担当者", "開始日", "期限日", "タグ", "説明", "Backlog URL", "画像URL",
+    ];
+    const esc = (v: string) => {
+      if (!v) return "";
+      if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+      return v;
+    };
+    const lines = rows.map((t) =>
+      [
+        t.taskNumber,
+        t.title,
+        t.status,
+        t.project.name,
+        t.category?.name || "",
+        t.assignee || "",
+        t.startDate?.slice(0, 10) || "",
+        t.dueDate?.slice(0, 10) || "",
+        t.tags.map(({ tag }) => tag.name).join("、"),
+        t.description || "",
+        t.backlogUrl || "",
+        t.screenshots.map((s) => s.url).join(" "),
+      ]
+        .map(esc)
+        .join(",")
+    );
+    const csv = "﻿" + [headers.map(esc).join(","), ...lines].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tasks_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
@@ -184,7 +222,7 @@ export default function Home() {
       </header>
 
       <main className={`mx-auto px-4 py-4 ${view === "card" ? "max-w-7xl" : ""}`}>
-        <div className="mb-4">
+        <div className="mb-4 flex items-start justify-between gap-4">
           <FilterBar
             filters={filters}
             onChange={setFilters}
@@ -192,6 +230,14 @@ export default function Home() {
             tags={tags}
             assignees={assignees}
           />
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => downloadCsv(filteredTasks)}
+          >
+            CSV
+          </Button>
         </div>
 
         <p className="mb-3 text-xs text-muted-foreground">
