@@ -23,7 +23,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>({
     projectId: "",
     categoryId: "",
-    status: "",
+    status: "__incomplete",
     assignee: "",
     tagId: "",
     thisWeek: false,
