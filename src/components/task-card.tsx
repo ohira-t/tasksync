@@ -29,26 +29,13 @@ export function TaskCard({
       style={{ borderColor: task.project.color }}
       onClick={onClick}
     >
-      <div className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span
-          className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-          style={{ backgroundColor: task.project.color }}
-        />
-        <span className="font-medium truncate">{task.project.name}</span>
-        {task.category && (
-          <>
-            <span>/</span>
-            <span className="truncate">{task.category.name}</span>
-          </>
-        )}
-      </div>
-
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground font-mono">
-          {task.taskNumber}
+      <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+        <span className="flex items-center gap-1 min-w-0 text-muted-foreground">
+          <span className="font-medium shrink-0">【{task.project.name}】</span>
+          <span className="font-mono shrink-0">{task.taskNumber}</span>
         </span>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[task.status] || "bg-gray-100"}`}
+          className={`rounded-full px-2 py-0.5 font-medium shrink-0 ${statusColors[task.status] || "bg-gray-100"}`}
         >
           {task.status}
         </span>
