@@ -29,18 +29,27 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    if (!body.taskNumber || !body.title || !body.projectId) {
+    if (!body.title) {
       return NextResponse.json(
-        { error: "taskNumber, title, projectId are required" },
+        { error: "title is required" },
         { status: 400 }
       );
     }
 
     const status = VALID_STATUSES.includes(body.status) ? body.status : "未対応";
 
+    let projectId = body.projectId;
+    if (!projectId) {
+      const first = await prisma.project.findFirst({ orderBy: { sortOrder: "asc" } });
+      if (!first) {
+        return NextResponse.json({ error: "No projects exist" }, { status: 400 });
+      }
+      projectId = first.id;
+    }
+
     const task = await prisma.task.create({
       data: {
-        taskNumber: body.taskNumber,
+        taskNumber: body.taskNumber || "",
         title: body.title,
         assignee: body.assignee || "",
         status,
@@ -48,7 +57,7 @@ export async function POST(req: Request) {
         backlogUrl: sanitizeUrl(body.backlogUrl || ""),
         startDate: body.startDate ? new Date(body.startDate) : null,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
-        projectId: body.projectId,
+        projectId,
         categoryId: body.categoryId || null,
         tags: body.tagIds?.length
           ? { create: body.tagIds.map((tagId: string) => ({ tagId })) }

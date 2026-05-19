@@ -210,7 +210,7 @@ export function TaskForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label>タイトル</Label>
+            <Label>タイトル <span className="text-destructive">*</span></Label>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -429,7 +429,7 @@ export function TaskForm({
                   setSaving(false);
                 }
               }}
-              disabled={!form.taskNumber || !form.title || !form.projectId || saving}
+              disabled={!form.title || saving}
             >
               {saving ? "保存中..." : task ? "更新" : "追加"}
             </Button>

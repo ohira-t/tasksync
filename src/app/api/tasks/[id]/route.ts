@@ -16,9 +16,9 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
 
-    if (!body.taskNumber || !body.title || !body.projectId) {
+    if (!body.title) {
       return NextResponse.json(
-        { error: "taskNumber, title, projectId are required" },
+        { error: "title is required" },
         { status: 400 }
       );
     }
@@ -32,7 +32,7 @@ export async function PUT(
       return tx.task.update({
         where: { id },
         data: {
-          taskNumber: body.taskNumber,
+          taskNumber: body.taskNumber || "",
           title: body.title,
           assignee: body.assignee || "",
           status,
@@ -40,7 +40,7 @@ export async function PUT(
           backlogUrl: sanitizeUrl(body.backlogUrl || ""),
           startDate: body.startDate ? new Date(body.startDate) : null,
           dueDate: body.dueDate ? new Date(body.dueDate) : null,
-          projectId: body.projectId,
+          projectId: body.projectId || undefined,
           categoryId: body.categoryId || null,
           tags: body.tagIds?.length
             ? { create: body.tagIds.map((tagId: string) => ({ tagId })) }
