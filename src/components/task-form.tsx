@@ -59,13 +59,14 @@ export function TaskForm({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; backlogUrl: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void;
+  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; backlogUrl: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void | Promise<void>;
   task: Task | null;
   projects: Project[];
   tags: Tag[];
 }) {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<"main" | "sub">("main");
   const mainFileRef = useRef<HTMLInputElement>(null);
   const subFileRef = useRef<HTMLInputElement>(null);
@@ -414,17 +415,23 @@ export function TaskForm({
               キャンセル
             </Button>
             <Button
-              onClick={() => {
-                const screenshots: { url: string; caption: string; isMain: boolean }[] = [];
-                if (form.mainScreenshot) {
-                  screenshots.push(form.mainScreenshot);
+              onClick={async () => {
+                if (saving) return;
+                setSaving(true);
+                try {
+                  const screenshots: { url: string; caption: string; isMain: boolean }[] = [];
+                  if (form.mainScreenshot) {
+                    screenshots.push(form.mainScreenshot);
+                  }
+                  screenshots.push(...form.subScreenshots);
+                  await onSave({ ...form, screenshots }, task?.id);
+                } finally {
+                  setSaving(false);
                 }
-                screenshots.push(...form.subScreenshots);
-                onSave({ ...form, screenshots }, task?.id);
               }}
-              disabled={!form.taskNumber || !form.title || !form.projectId}
+              disabled={!form.taskNumber || !form.title || !form.projectId || saving}
             >
-              {task ? "更新" : "追加"}
+              {saving ? "保存中..." : task ? "更新" : "追加"}
             </Button>
           </div>
         </div>
