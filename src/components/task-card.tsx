@@ -15,11 +15,9 @@ const statusColors: Record<string, string> = {
 export function TaskCard({
   task,
   onClick,
-  onToggleStar,
 }: {
   task: Task;
   onClick: () => void;
-  onToggleStar: () => void;
 }) {
   const explicit = task.screenshots.find((s) => s.isMain);
   const mainShot = explicit || task.screenshots[0] || null;
@@ -33,15 +31,6 @@ export function TaskCard({
     >
       <div className="mb-2 flex items-center justify-between gap-2 text-xs">
         <span className="flex items-center gap-1 min-w-0 text-muted-foreground">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleStar();
-            }}
-            className={`shrink-0 text-base leading-none transition-colors ${task.starred ? "text-yellow-500" : "text-gray-300 hover:text-yellow-400"}`}
-          >
-            {task.starred ? "★" : "☆"}
-          </button>
           <span className="font-medium shrink-0">【{task.project.name}】</span>
           <span className="font-mono shrink-0">{task.taskNumber}</span>
         </span>

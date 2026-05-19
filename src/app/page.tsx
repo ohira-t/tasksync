@@ -27,7 +27,6 @@ export default function Home() {
     assignee: "",
     tagId: "",
     thisWeek: false,
-    starred: false,
   });
 
   const fetchAll = useCallback(async () => {
@@ -72,7 +71,6 @@ export default function Home() {
         !t.tags.some(({ tag }) => tag.id === filters.tagId)
       )
         return false;
-      if (filters.starred && !t.starred) return false;
       if (filters.thisWeek) {
         if (!t.startDate || !t.dueDate) return false;
         const now = new Date();
@@ -145,25 +143,9 @@ export default function Home() {
     }
   }
 
-  async function toggleStar(task: Task) {
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ starred: !task.starred }),
-      });
-      if (!res.ok) return;
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === task.id ? { ...t, starred: !t.starred } : t
-        )
-      );
-    } catch {}
-  }
-
   function downloadCsv(rows: Task[]) {
     const headers = [
-      "課題番号", "タイトル", "ステータス", "★", "プロジェクト", "カテゴリー",
+      "課題番号", "タイトル", "ステータス", "プロジェクト", "カテゴリー",
       "担当者", "開始日", "期限日", "タグ", "説明", "Backlog URL", "画像URL",
     ];
     const esc = (v: string) => {
@@ -176,7 +158,6 @@ export default function Home() {
         t.taskNumber,
         t.title,
         t.status,
-        t.starred ? "★" : "",
         t.project.name,
         t.category?.name || "",
         t.assignee || "",
@@ -281,7 +262,6 @@ export default function Home() {
                     setSelectedTask(task);
                     setDetailOpen(true);
                   }}
-                  onToggleStar={() => toggleStar(task)}
                 />
               ))}
             </div>
