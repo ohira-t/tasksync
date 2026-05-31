@@ -50,6 +50,7 @@ export function GanttChart({
   const { startDate, totalDays, dates, today, todayOffset } = useMemo(() => {
     const td = new Date();
     td.setHours(0, 0, 0, 0);
+    // デフォルトの開始日は当日の1週間前
     const start = new Date(td);
     start.setDate(start.getDate() - 7);
 
@@ -59,6 +60,10 @@ export function GanttChart({
     for (const t of ganttTasks) {
       const due = new Date(t.dueDate!);
       if (due > end) end = new Date(due.getTime() + 7 * 24 * 60 * 60 * 1000);
+      // 1週間前より早く始まっているタスクは、その開始日までタイムラインを延ばす
+      const taskStart = new Date(t.startDate!);
+      taskStart.setHours(0, 0, 0, 0);
+      if (taskStart < start) start.setTime(taskStart.getTime());
     }
 
     const total = daysBetween(start, end) + 1;
@@ -80,9 +85,12 @@ export function GanttChart({
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollLeft = 7 * DAY_WIDTH - 20;
+      // 当日を左寄りに表示（開始日が1週間より前に延びても位置を保つ）。
+      // タイムラインを過去に延ばしてあるので、ここから左へスクロールすれば
+      // 継続中タスクの開始日まで辿れる。
+      scrollRef.current.scrollLeft = todayOffset * DAY_WIDTH - 20;
     }
-  }, []);
+  }, [todayOffset]);
 
   if (ganttTasks.length === 0) {
     return (
