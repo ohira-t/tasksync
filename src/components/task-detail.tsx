@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberSelect } from "@/components/task-form";
+import { BacklogCopyMenu } from "@/components/backlog-copy-menu";
 import { getSavedUserName, saveUserName } from "@/lib/user-name";
 import {
   Dialog,
@@ -304,6 +305,11 @@ function TaskDetailBody({
           >
             {task.status}
           </span>
+          {task.backlogUrl && (
+            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-sky-100 text-sky-700">
+              転記済み
+            </span>
+          )}
         </div>
         <DialogTitle className="text-lg font-semibold">{task.title}</DialogTitle>
       </DialogHeader>
@@ -421,7 +427,9 @@ function TaskDetailBody({
 
         <CommentSection taskId={task.id} members={members} />
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex items-center gap-2 pt-2">
+          <BacklogCopyMenu task={task} />
+          <div className="flex-1" />
           <Button variant="outline" size="sm" onClick={onEdit}>
             編集
           </Button>

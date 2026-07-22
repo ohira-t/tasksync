@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Task, Project, Tag, Member } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/task-card";
@@ -30,6 +30,10 @@ export default function Home() {
     thisWeek: false,
   });
 
+  // Backlogコピーの「元報告」リンク(/?task=<id>)から開かれたとき、
+  // 初回ロード後にその課題の詳細を自動で開く
+  const deepLinkHandled = useRef(false);
+
   const fetchAll = useCallback(async () => {
     try {
       const [tasksRes, projectsRes, tagsRes, membersRes] = await Promise.all([
@@ -42,10 +46,21 @@ export default function Home() {
         console.error("Failed to fetch data");
         return;
       }
-      setTasks(await tasksRes.json());
+      const tasksData: Task[] = await tasksRes.json();
+      setTasks(tasksData);
       setProjects(await projectsRes.json());
       setTags(await tagsRes.json());
       setMembers(await membersRes.json());
+
+      if (!deepLinkHandled.current) {
+        deepLinkHandled.current = true;
+        const id = new URLSearchParams(window.location.search).get("task");
+        const linked = id ? tasksData.find((t) => t.id === id) : null;
+        if (linked) {
+          setSelectedTask(linked);
+          setDetailOpen(true);
+        }
+      }
     } catch (e) {
       console.error("Failed to fetch data", e);
     }

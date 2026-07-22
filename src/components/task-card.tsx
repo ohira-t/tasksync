@@ -2,6 +2,7 @@
 
 import { Task } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { BacklogCopyMenu } from "@/components/backlog-copy-menu";
 
 const statusColors: Record<string, string> = {
   未対応: "bg-gray-200 text-gray-700",
@@ -34,10 +35,17 @@ export function TaskCard({
           <span className="font-medium shrink-0">【{task.project.name}】</span>
           <span className="font-mono shrink-0">{task.taskNumber}</span>
         </span>
-        <span
-          className={`rounded-full px-2 py-0.5 font-medium shrink-0 ${statusColors[task.status] || "bg-gray-100"}`}
-        >
-          {task.status}
+        <span className="flex items-center gap-1 shrink-0">
+          {task.backlogUrl && (
+            <span className="rounded-full px-2 py-0.5 font-medium bg-sky-100 text-sky-700">
+              転記済み
+            </span>
+          )}
+          <span
+            className={`rounded-full px-2 py-0.5 font-medium ${statusColors[task.status] || "bg-gray-100"}`}
+          >
+            {task.status}
+          </span>
         </span>
       </div>
 
@@ -89,6 +97,10 @@ export function TaskCard({
             {tag.name}
           </Badge>
         ))}
+        {/* カード自体のクリック(詳細を開く)に伝播させない */}
+        <span className="ml-auto" onClick={(e) => e.stopPropagation()}>
+          <BacklogCopyMenu task={task} compact />
+        </span>
       </div>
 
       {(task.startDate || task.dueDate) && (
