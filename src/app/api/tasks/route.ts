@@ -52,6 +52,7 @@ export async function POST(req: Request) {
         taskNumber: body.taskNumber || "",
         title: body.title,
         assignee: body.assignee || "",
+        createdBy: body.createdBy || "",
         status,
         description: body.description || "",
         backlogUrl: sanitizeUrl(body.backlogUrl || ""),

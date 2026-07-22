@@ -26,6 +26,12 @@ model Category {
   tasks     Task[]
 }
 
+model Member {
+  id        String @id @default(cuid())
+  name      String @unique
+  sortOrder Int    @default(0)
+}
+
 model Tag {
   id        String @id @default(cuid())
   name      String @unique
@@ -39,6 +45,7 @@ model Task {
   taskNumber  String
   title       String
   assignee    String   @default("")
+  createdBy   String   @default("")
   status      String   @default("未対応")
   description String   @default("")
   backlogUrl  String   @default("")
@@ -50,8 +57,20 @@ model Task {
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   tags        TaskTag[]
   screenshots Screenshot[]
+  comments    Comment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  body       String
+  authorName String   @default("")
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
 }
 
 model TaskTag {

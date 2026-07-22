@@ -13,6 +13,12 @@ export type Category = {
   projectId: string;
 };
 
+export type Member = {
+  id: string;
+  name: string;
+  sortOrder: number;
+};
+
 export type Tag = {
   id: string;
   name: string;
@@ -28,11 +34,20 @@ export type Screenshot = {
   isMain: boolean;
 };
 
+export type Comment = {
+  id: string;
+  body: string;
+  authorName: string;
+  taskId: string;
+  createdAt: string;
+};
+
 export type Task = {
   id: string;
   taskNumber: string;
   title: string;
   assignee: string;
+  createdBy: string;
   status: string;
   description: string;
   backlogUrl: string;
