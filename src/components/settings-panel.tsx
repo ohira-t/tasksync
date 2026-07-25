@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Project, Tag } from "@/lib/types";
+import { Project, Tag, Member } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -135,12 +135,14 @@ export function SettingsPanel({
   onClose,
   projects,
   tags,
+  members,
   onRefresh,
 }: {
   open: boolean;
   onClose: () => void;
   projects: Project[];
   tags: Tag[];
+  members: Member[];
   onRefresh: () => void;
 }) {
   const [projectName, setProjectName] = useState("");
@@ -149,15 +151,17 @@ export function SettingsPanel({
   const [categoryProjectId, setCategoryProjectId] = useState("");
   const [tagName, setTagName] = useState("");
   const [tagColor, setTagColor] = useState("#8b5cf6");
+  const [memberName, setMemberName] = useState("");
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editingMember, setEditingMember] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
 
   async function reorder(
-    type: "project" | "category" | "tag",
+    type: "project" | "category" | "tag" | "member",
     id: string,
     direction: "up" | "down"
   ) {
@@ -251,6 +255,45 @@ export function SettingsPanel({
   async function deleteTag(id: string) {
     if (!confirm("このタグを削除しますか？")) return;
     await fetch(`/api/tags/${id}`, { method: "DELETE" });
+    onRefresh();
+  }
+
+  async function addMember() {
+    const name = memberName.trim();
+    if (!name) return;
+    const res = await fetch("/api/members", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "メンバーの追加に失敗しました");
+      return;
+    }
+    setMemberName("");
+    onRefresh();
+  }
+
+  async function updateMember(id: string, name: string) {
+    const res = await fetch(`/api/members/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "メンバーの更新に失敗しました");
+      return;
+    }
+    setEditingMember(null);
+    onRefresh();
+  }
+
+  async function deleteMember(id: string) {
+    if (!confirm("このメンバーを削除しますか？既存の課題やコメントに記録された名前はそのまま残ります。"))
+      return;
+    await fetch(`/api/members/${id}`, { method: "DELETE" });
     onRefresh();
   }
 
@@ -420,6 +463,47 @@ export function SettingsPanel({
                     isFirst={i === 0}
                     isLast={i === tags.length - 1}
                     showColor
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Members */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">メンバー</Label>
+            <p className="text-xs text-muted-foreground">
+              課題の担当者・起票者・コメント投稿者のプルダウンに表示される名前です。
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
+                placeholder="メンバー名"
+                className="flex-1"
+                onKeyDown={(e) => e.key === "Enter" && !(e.nativeEvent as KeyboardEvent).isComposing && addMember()}
+              />
+              <Button size="sm" onClick={addMember}>
+                追加
+              </Button>
+            </div>
+            {members.length > 0 && (
+              <div className="space-y-1.5">
+                {members.map((m, i) => (
+                  <InlineEdit
+                    key={m.id}
+                    item={m}
+                    editing={editingMember === m.id}
+                    onStartEdit={() => setEditingMember(m.id)}
+                    onSave={(name) => updateMember(m.id, name)}
+                    onDelete={() => deleteMember(m.id)}
+                    onCancel={() => setEditingMember(null)}
+                    onMoveUp={() => reorder("member", m.id, "up")}
+                    onMoveDown={() => reorder("member", m.id, "down")}
+                    isFirst={i === 0}
+                    isLast={i === members.length - 1}
                   />
                 ))}
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Task, Project, Tag } from "@/lib/types";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Task, Project, Tag, Member } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetail } from "@/components/task-detail";
@@ -14,6 +14,7 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -29,20 +30,37 @@ export default function Home() {
     thisWeek: false,
   });
 
+  // Backlogコピーの「元報告」リンク(/?task=<id>)から開かれたとき、
+  // 初回ロード後にその課題の詳細を自動で開く
+  const deepLinkHandled = useRef(false);
+
   const fetchAll = useCallback(async () => {
     try {
-      const [tasksRes, projectsRes, tagsRes] = await Promise.all([
+      const [tasksRes, projectsRes, tagsRes, membersRes] = await Promise.all([
         fetch("/api/tasks"),
         fetch("/api/projects"),
         fetch("/api/tags"),
+        fetch("/api/members"),
       ]);
-      if (!tasksRes.ok || !projectsRes.ok || !tagsRes.ok) {
+      if (!tasksRes.ok || !projectsRes.ok || !tagsRes.ok || !membersRes.ok) {
         console.error("Failed to fetch data");
         return;
       }
-      setTasks(await tasksRes.json());
+      const tasksData: Task[] = await tasksRes.json();
+      setTasks(tasksData);
       setProjects(await projectsRes.json());
       setTags(await tagsRes.json());
+      setMembers(await membersRes.json());
+
+      if (!deepLinkHandled.current) {
+        deepLinkHandled.current = true;
+        const id = new URLSearchParams(window.location.search).get("task");
+        const linked = id ? tasksData.find((t) => t.id === id) : null;
+        if (linked) {
+          setSelectedTask(linked);
+          setDetailOpen(true);
+        }
+      }
     } catch (e) {
       console.error("Failed to fetch data", e);
     }
@@ -94,6 +112,7 @@ export default function Home() {
       taskNumber: string;
       title: string;
       assignee: string;
+      createdBy: string;
       status: string;
       description: string;
       backlogUrl: string;
@@ -146,7 +165,7 @@ export default function Home() {
   function downloadCsv(rows: Task[]) {
     const headers = [
       "課題番号", "タイトル", "ステータス", "プロジェクト", "カテゴリー",
-      "担当者", "開始日", "期限日", "タグ", "説明", "Backlog URL", "画像URL",
+      "担当者", "起票者", "開始日", "期限日", "タグ", "説明", "Backlog URL", "画像URL",
     ];
     const esc = (v: string) => {
       if (!v) return "";
@@ -161,6 +180,7 @@ export default function Home() {
         t.project.name,
         t.category?.name || "",
         t.assignee || "",
+        t.createdBy || "",
         t.startDate?.slice(0, 10) || "",
         t.dueDate?.slice(0, 10) || "",
         t.tags.map(({ tag }) => tag.name).join("、"),
@@ -280,6 +300,7 @@ export default function Home() {
       <TaskDetail
         task={selectedTask}
         open={detailOpen}
+        members={members}
         onClose={() => setDetailOpen(false)}
         onEdit={() => {
           setDetailOpen(false);
@@ -299,6 +320,7 @@ export default function Home() {
         task={editingTask}
         projects={projects}
         tags={tags}
+        members={members}
       />
 
       <SettingsPanel
@@ -306,6 +328,7 @@ export default function Home() {
         onClose={() => setSettingsOpen(false)}
         projects={projects}
         tags={tags}
+        members={members}
         onRefresh={fetchAll}
       />
     </div>

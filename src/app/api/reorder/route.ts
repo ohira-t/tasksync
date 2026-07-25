@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 async function normalizeAndSwap(
-  type: "project" | "category" | "tag",
+  type: "project" | "category" | "tag" | "member",
   id: string,
   direction: "up" | "down",
 ) {
@@ -53,6 +53,20 @@ async function normalizeAndSwap(
       prisma.tag.update({ where: { id: items[idx].id }, data: { sortOrder: swapIdx } }),
       prisma.tag.update({ where: { id: items[swapIdx].id }, data: { sortOrder: idx } }),
     ]);
+  } else if (type === "member") {
+    const items = await prisma.member.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].sortOrder !== i) {
+        await prisma.member.update({ where: { id: items[i].id }, data: { sortOrder: i } });
+      }
+    }
+    const idx = items.findIndex((item) => item.id === id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return;
+    await prisma.$transaction([
+      prisma.member.update({ where: { id: items[idx].id }, data: { sortOrder: swapIdx } }),
+      prisma.member.update({ where: { id: items[swapIdx].id }, data: { sortOrder: idx } }),
+    ]);
   }
 }
 
@@ -60,12 +74,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { type, id, direction } = body as {
-      type: "project" | "category" | "tag";
+      type: "project" | "category" | "tag" | "member";
       id: string;
       direction: "up" | "down";
     };
 
-    if (!["project", "category", "tag"].includes(type) || !id || !["up", "down"].includes(direction)) {
+    if (!["project", "category", "tag", "member"].includes(type) || !id || !["up", "down"].includes(direction)) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 

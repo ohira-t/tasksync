@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Task, Project, Tag, STATUSES } from "@/lib/types";
+import { Task, Project, Tag, Member, STATUSES } from "@/lib/types";
+import { getSavedUserName, saveUserName } from "@/lib/user-name";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +22,7 @@ type FormData = {
   taskNumber: string;
   title: string;
   assignee: string;
+  createdBy: string;
   status: string;
   description: string;
   backlogUrl: string;
@@ -37,6 +39,7 @@ const emptyForm: FormData = {
   taskNumber: "",
   title: "",
   assignee: "",
+  createdBy: "",
   status: "未対応",
   description: "",
   backlogUrl: "",
@@ -49,6 +52,37 @@ const emptyForm: FormData = {
   subScreenshots: [],
 };
 
+// 登録済みメンバーに無い値(過去の自由入力やメンバー削除後の名前)でも
+// 編集時に消えないよう、現在値を「(未登録)」として選択肢に含める
+export function MemberSelect({
+  value,
+  onChange,
+  members,
+  emptyLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  members: Member[];
+  emptyLabel: string;
+}) {
+  const isLegacy = !!value && !members.some((m) => m.name === value);
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-8 py-1 text-sm shadow-xs"
+    >
+      <option value="">{emptyLabel}</option>
+      {isLegacy && <option value={value}>{value}（未登録）</option>}
+      {members.map((m) => (
+        <option key={m.id} value={m.name}>
+          {m.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function TaskForm({
   open,
   onClose,
@@ -56,13 +90,15 @@ export function TaskForm({
   task,
   projects,
   tags,
+  members,
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { taskNumber: string; title: string; assignee: string; status: string; description: string; backlogUrl: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void | Promise<void>;
+  onSave: (data: { taskNumber: string; title: string; assignee: string; createdBy: string; status: string; description: string; backlogUrl: string; startDate: string; dueDate: string; projectId: string; categoryId: string; tagIds: string[]; screenshots: { url: string; caption: string; isMain: boolean }[] }, id?: string) => void | Promise<void>;
   task: Task | null;
   projects: Project[];
   tags: Tag[];
+  members: Member[];
 }) {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [uploading, setUploading] = useState(false);
@@ -79,6 +115,7 @@ export function TaskForm({
         taskNumber: task.taskNumber,
         title: task.title,
         assignee: task.assignee,
+        createdBy: task.createdBy,
         status: task.status,
         description: task.description,
         backlogUrl: task.backlogUrl || "",
@@ -97,7 +134,7 @@ export function TaskForm({
         })),
       });
     } else {
-      setForm(emptyForm);
+      setForm({ ...emptyForm, createdBy: getSavedUserName() });
     }
   }, [task, open]);
 
@@ -265,35 +302,44 @@ export function TaskForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>担当者</Label>
-              <Input
+              <MemberSelect
                 value={form.assignee}
-                onChange={(e) =>
-                  setForm({ ...form, assignee: e.target.value })
-                }
-                placeholder="担当者名"
+                onChange={(assignee) => setForm({ ...form, assignee })}
+                members={members}
+                emptyLabel="未定"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>開始日</Label>
-                <Input
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) =>
-                    setForm({ ...form, startDate: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>期限日</Label>
-                <Input
-                  type="date"
-                  value={form.dueDate}
-                  onChange={(e) =>
-                    setForm({ ...form, dueDate: e.target.value })
-                  }
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label>起票者</Label>
+              <MemberSelect
+                value={form.createdBy}
+                onChange={(createdBy) => setForm({ ...form, createdBy })}
+                members={members}
+                emptyLabel="選択してください"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>開始日</Label>
+              <Input
+                type="date"
+                value={form.startDate}
+                onChange={(e) =>
+                  setForm({ ...form, startDate: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>期限日</Label>
+              <Input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) =>
+                  setForm({ ...form, dueDate: e.target.value })
+                }
+              />
             </div>
           </div>
 
@@ -424,6 +470,7 @@ export function TaskForm({
                     screenshots.push(form.mainScreenshot);
                   }
                   screenshots.push(...form.subScreenshots);
+                  saveUserName(form.createdBy);
                   await onSave({ ...form, screenshots }, task?.id);
                 } finally {
                   setSaving(false);
