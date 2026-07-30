@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Task, Project, Tag, Member } from "@/lib/types";
+import { useLiveRefresh } from "@/lib/live-refresh";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetail } from "@/components/task-detail";
@@ -15,7 +16,9 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  // 詳細ダイアログは「その時点の課題オブジェクト」ではなく id を保持する。
+  // こうしておくと再取得のたびに開いている詳細も最新の内容に追従する。
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -34,30 +37,54 @@ export default function Home() {
   // 初回ロード後にその課題の詳細を自動で開く
   const deepLinkHandled = useRef(false);
 
+  // 前回受け取ったレスポンスの生JSON。内容が同じなら setState せず、
+  // 定期取得のたびに一覧が再描画されるのを防ぐ。
+  const lastJson = useRef<Record<string, string>>({});
+
   const fetchAll = useCallback(async () => {
     try {
       const [tasksRes, projectsRes, tagsRes, membersRes] = await Promise.all([
-        fetch("/api/tasks"),
-        fetch("/api/projects"),
-        fetch("/api/tags"),
-        fetch("/api/members"),
+        fetch("/api/tasks", { cache: "no-store" }),
+        fetch("/api/projects", { cache: "no-store" }),
+        fetch("/api/tags", { cache: "no-store" }),
+        fetch("/api/members", { cache: "no-store" }),
       ]);
       if (!tasksRes.ok || !projectsRes.ok || !tagsRes.ok || !membersRes.ok) {
         console.error("Failed to fetch data");
         return;
       }
-      const tasksData: Task[] = await tasksRes.json();
-      setTasks(tasksData);
-      setProjects(await projectsRes.json());
-      setTags(await tagsRes.json());
-      setMembers(await membersRes.json());
+      const [tasksJson, projectsJson, tagsJson, membersJson] =
+        await Promise.all([
+          tasksRes.text(),
+          projectsRes.text(),
+          tagsRes.text(),
+          membersRes.text(),
+        ]);
 
-      if (!deepLinkHandled.current) {
+      let tasksData: Task[] | null = null;
+      if (lastJson.current.tasks !== tasksJson) {
+        lastJson.current.tasks = tasksJson;
+        tasksData = JSON.parse(tasksJson) as Task[];
+        setTasks(tasksData);
+      }
+      if (lastJson.current.projects !== projectsJson) {
+        lastJson.current.projects = projectsJson;
+        setProjects(JSON.parse(projectsJson));
+      }
+      if (lastJson.current.tags !== tagsJson) {
+        lastJson.current.tags = tagsJson;
+        setTags(JSON.parse(tagsJson));
+      }
+      if (lastJson.current.members !== membersJson) {
+        lastJson.current.members = membersJson;
+        setMembers(JSON.parse(membersJson));
+      }
+
+      if (!deepLinkHandled.current && tasksData) {
         deepLinkHandled.current = true;
         const id = new URLSearchParams(window.location.search).get("task");
-        const linked = id ? tasksData.find((t) => t.id === id) : null;
-        if (linked) {
-          setSelectedTask(linked);
+        if (id && tasksData.some((t) => t.id === id)) {
+          setSelectedTaskId(id);
           setDetailOpen(true);
         }
       }
@@ -66,9 +93,21 @@ export default function Home() {
     }
   }, []);
 
+  // 初回取得と、他の人が追加・編集した内容のリロードなしの取り込み
+  useLiveRefresh(fetchAll);
+
+  const selectedTask = useMemo(
+    () => tasks.find((t) => t.id === selectedTaskId) ?? null,
+    [tasks, selectedTaskId]
+  );
+
+  // 開いている課題が他の人に削除されたら、詳細は閉じる
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (detailOpen && selectedTaskId && lastJson.current.tasks && !selectedTask) {
+      setDetailOpen(false);
+      setSelectedTaskId(null);
+    }
+  }, [detailOpen, selectedTaskId, selectedTask]);
 
   const assignees = useMemo(() => {
     const set = new Set(tasks.map((t) => t.assignee).filter(Boolean));
@@ -155,7 +194,7 @@ export default function Home() {
         return;
       }
       setDetailOpen(false);
-      setSelectedTask(null);
+      setSelectedTaskId(null);
       await fetchAll();
     } catch {
       alert("削除に失敗しました");
@@ -279,7 +318,7 @@ export default function Home() {
                   key={task.id}
                   task={task}
                   onClick={() => {
-                    setSelectedTask(task);
+                    setSelectedTaskId(task.id);
                     setDetailOpen(true);
                   }}
                 />
@@ -290,7 +329,7 @@ export default function Home() {
           <GanttChart
             tasks={filteredTasks}
             onTaskClick={(task) => {
-              setSelectedTask(task);
+              setSelectedTaskId(task.id);
               setDetailOpen(true);
             }}
           />

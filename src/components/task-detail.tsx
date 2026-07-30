@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MemberSelect } from "@/components/task-form";
 import { BacklogCopyMenu } from "@/components/backlog-copy-menu";
 import { getSavedUserName, saveUserName } from "@/lib/user-name";
+import { useLiveRefresh } from "@/lib/live-refresh";
 import {
   Dialog,
   DialogContent,
@@ -127,25 +128,28 @@ function CommentSection({
   const [authorName, setAuthorName] = useState(getSavedUserName);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // 投稿・削除の最中に取得結果で上書きすると、直前の操作が一瞬巻き戻って見えるため抑止する
+  const mutating = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/tasks/${taskId}/comments`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setComments(data);
-      } catch {
-        // 取得失敗時は空のまま表示する
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const loadComments = useCallback(async () => {
+    if (mutating.current) return;
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/comments`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!mutating.current) setComments(data);
+    } catch {
+      // 取得失敗時は今表示している内容のままにする
+    } finally {
+      setLoading(false);
+    }
   }, [taskId]);
+
+  // 初回読み込みと、詳細を開いている間の他の人のコメントの取り込み。
+  // 課題ごとに CommentSection は作り直される(key={task.id})ので初回取得はマウント時でよい
+  useLiveRefresh(loadComments);
 
   async function handleSubmit() {
     if (submitting) return;
@@ -153,6 +157,7 @@ function CommentSection({
     const name = authorName.trim();
     if (!text || !name) return;
     setSubmitting(true);
+    mutating.current = true;
     try {
       const res = await fetch(`/api/tasks/${taskId}/comments`, {
         method: "POST",
@@ -171,11 +176,13 @@ function CommentSection({
       alert("コメントの投稿に失敗しました");
     } finally {
       setSubmitting(false);
+      mutating.current = false;
     }
   }
 
   async function handleDelete(id: string) {
     if (!confirm("このコメントを削除しますか？")) return;
+    mutating.current = true;
     try {
       const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -185,6 +192,8 @@ function CommentSection({
       setComments((prev) => prev.filter((c) => c.id !== id));
     } catch {
       alert("コメントの削除に失敗しました");
+    } finally {
+      mutating.current = false;
     }
   }
 
