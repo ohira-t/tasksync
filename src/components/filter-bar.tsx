@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useSyncExternalStore } from "react";
 import { Project, Tag, STATUSES } from "@/lib/types";
 
 export type Filters = {
@@ -10,6 +11,95 @@ export type Filters = {
   tagId: string;
   thisWeek: boolean;
 };
+
+export const defaultFilters: Filters = {
+  projectId: "",
+  categoryId: "",
+  status: "__incomplete",
+  assignee: "",
+  tagId: "",
+  thisWeek: false,
+};
+
+// 絞り込み条件は人それぞれなので、サーバーには送らず各自のブラウザに残す。
+// state に入れて useEffect で当てるとサーバー描画との食い違いが出るため、
+// localStorage を外部ストアとして描画中にそのまま読む。
+const FILTERS_STORAGE_KEY = "tasksync:filters";
+
+const listeners = new Set<() => void>();
+let cachedRaw: string | null = null;
+let cachedFilters: Filters = defaultFilters;
+// localStorage が使えない環境(プライベートモード等)ではメモリ上だけで保持する
+let storageBroken = false;
+let memoryFilters: Filters = defaultFilters;
+
+function parseFilters(raw: string | null): Filters {
+  if (!raw) return defaultFilters;
+  try {
+    const saved = JSON.parse(raw) as Partial<Filters>;
+    // 壊れた値や古い形式が入っていても画面が崩れないよう、1項目ずつ検証する
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    return {
+      projectId: str(saved.projectId),
+      categoryId: str(saved.categoryId),
+      status: str(saved.status),
+      assignee: str(saved.assignee),
+      tagId: str(saved.tagId),
+      thisWeek: saved.thisWeek === true,
+    };
+  } catch {
+    return defaultFilters;
+  }
+}
+
+// 同じ値なら同じオブジェクトを返す必要がある(useSyncExternalStore の要件)
+function getSnapshot(): Filters {
+  if (storageBroken) return memoryFilters;
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(FILTERS_STORAGE_KEY);
+  } catch {
+    storageBroken = true;
+    return memoryFilters;
+  }
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    cachedFilters = parseFilters(raw);
+  }
+  return cachedFilters;
+}
+
+function getServerSnapshot(): Filters {
+  return defaultFilters;
+}
+
+function subscribe(onStoreChange: () => void) {
+  listeners.add(onStoreChange);
+  // 同じ人が複数タブを開いているとき、片方での変更をもう片方にも反映する
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    listeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+export function useFilters(): [Filters, (next: Filters) => void] {
+  const filters = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
+  const setFilters = useCallback((next: Filters) => {
+    try {
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      storageBroken = true;
+      memoryFilters = next;
+    }
+    listeners.forEach((notify) => notify());
+  }, []);
+  return [filters, setFilters];
+}
 
 const selectClass =
   "h-8 rounded-md border border-input bg-transparent pl-2.5 pr-8 py-1 text-xs shadow-xs outline-none focus:border-ring focus:ring-1 focus:ring-ring/50";

@@ -395,6 +395,18 @@ function TaskDetailBody({
               {task.dueDate ? task.dueDate.slice(0, 10) : "未定"}
             </span>
           </div>
+          <div>
+            <span className="text-muted-foreground">登録日時:</span>{" "}
+            <span className="font-medium">
+              {new Date(task.createdAt).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
         </div>
 
         {task.backlogUrl && /^https?:\/\//i.test(task.backlogUrl) && (

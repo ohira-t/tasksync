@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetail } from "@/components/task-detail";
 import { TaskForm } from "@/components/task-form";
-import { FilterBar, Filters } from "@/components/filter-bar";
+import { FilterBar, useFilters } from "@/components/filter-bar";
 import { GanttChart } from "@/components/gantt-chart";
 import { SettingsPanel } from "@/components/settings-panel";
 
@@ -24,14 +24,8 @@ export default function Home() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [view, setView] = useState<"card" | "gantt">("card");
-  const [filters, setFilters] = useState<Filters>({
-    projectId: "",
-    categoryId: "",
-    status: "__incomplete",
-    assignee: "",
-    tagId: "",
-    thisWeek: false,
-  });
+  // 絞り込み条件は各自のブラウザに保存され、次に開いたときも残る
+  const [savedFilters, setFilters] = useFilters();
 
   // Backlogコピーの「元報告」リンク(/?task=<id>)から開かれたとき、
   // 初回ロード後にその課題の詳細を自動で開く
@@ -113,6 +107,26 @@ export default function Home() {
     const set = new Set(tasks.map((t) => t.assignee).filter(Boolean));
     return Array.from(set).sort();
   }, [tasks]);
+
+  // 保存された条件が削除済みのプロジェクト等を指していると、理由の分からない
+  // 0件表示になってしまうため、いま存在しないものは無視する
+  const filters = useMemo(() => {
+    if (!projects.length) return savedFilters;
+    const next = { ...savedFilters };
+    if (next.projectId && !projects.some((p) => p.id === next.projectId)) {
+      next.projectId = "";
+      next.categoryId = "";
+    }
+    if (
+      next.categoryId &&
+      !projects.some((p) => p.categories.some((c) => c.id === next.categoryId))
+    ) {
+      next.categoryId = "";
+    }
+    if (next.tagId && !tags.some((t) => t.id === next.tagId)) next.tagId = "";
+    if (next.assignee && !assignees.includes(next.assignee)) next.assignee = "";
+    return next;
+  }, [savedFilters, projects, tags, assignees]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
