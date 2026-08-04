@@ -218,7 +218,7 @@ export default function Home() {
   function downloadCsv(rows: Task[]) {
     const headers = [
       "課題番号", "タイトル", "ステータス", "プロジェクト", "カテゴリー",
-      "担当者", "起票者", "開始日", "期限日", "タグ", "説明", "Backlog URL", "画像URL",
+      "担当者", "起票者", "開始日", "期限日", "タグ", "説明", "Backlog URL",
     ];
     const esc = (v: string) => {
       if (!v) return "";
@@ -239,7 +239,6 @@ export default function Home() {
         t.tags.map(({ tag }) => tag.name).join("、"),
         t.description || "",
         t.backlogUrl || "",
-        t.screenshots.map((s) => s.url).join(" "),
       ]
         .map(esc)
         .join(",")

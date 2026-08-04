@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { maskTaskScreenshots } from "@/lib/screenshot-url";
 import { NextResponse } from "next/server";
 
 const VALID_STATUSES = ["未対応", "処理中", "途中で停止中", "プルリク依頼中", "処理済み", "完了"];
@@ -19,7 +20,7 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(tasks);
+    return NextResponse.json(tasks.map(maskTaskScreenshots));
   } catch {
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
   }
@@ -65,14 +66,18 @@ export async function POST(req: Request) {
           : undefined,
         screenshots: body.screenshots?.length
           ? {
-              create: body.screenshots.map(
-                (s: { url: string; caption?: string; isMain?: boolean }, i: number) => ({
-                  url: s.url,
-                  caption: s.caption || "",
-                  order: i,
-                  isMain: s.isMain || false,
-                })
-              ),
+              create: body.screenshots
+                .filter((s: { url?: string }) =>
+                  /^https?:\/\//i.test(s.url || "")
+                )
+                .map(
+                  (s: { url: string; caption?: string; isMain?: boolean }, i: number) => ({
+                    url: s.url,
+                    caption: s.caption || "",
+                    order: i,
+                    isMain: s.isMain || false,
+                  })
+                ),
             }
           : undefined,
       },
@@ -83,7 +88,7 @@ export async function POST(req: Request) {
         screenshots: { orderBy: { order: "asc" } },
       },
     });
-    return NextResponse.json(task);
+    return NextResponse.json(maskTaskScreenshots(task));
   } catch {
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }

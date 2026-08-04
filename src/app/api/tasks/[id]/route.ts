@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import {
+  maskTaskScreenshots,
+  screenshotIdFromProxyUrl,
+} from "@/lib/screenshot-url";
 import { NextResponse } from "next/server";
 
 const VALID_STATUSES = ["未対応", "処理中", "途中で停止中", "プルリク依頼中", "処理済み", "完了"];
@@ -25,6 +29,28 @@ export async function PUT(
 
     const status = VALID_STATUSES.includes(body.status) ? body.status : "未対応";
 
+    // クライアントには /api/images/<id> 形式のプロキシURLを渡しているため、
+    // 編集保存で戻ってきたら既存レコードの実URL(blob)に解決してから保存する。
+    // 実URLを持たない不正なID・URLは破棄する
+    const existingShots = await prisma.screenshot.findMany({
+      where: { taskId: id },
+    });
+    const urlById = new Map(existingShots.map((s) => [s.id, s.url]));
+    const screenshots: { url: string; caption: string; isMain: boolean }[] = (
+      (body.screenshots ?? []) as {
+        url?: string;
+        caption?: string;
+        isMain?: boolean;
+      }[]
+    )
+      .map((s) => {
+        const proxyId = screenshotIdFromProxyUrl(s.url || "");
+        const url = proxyId ? urlById.get(proxyId) : s.url;
+        if (!url || !/^https?:\/\//i.test(url)) return null;
+        return { url, caption: s.caption || "", isMain: s.isMain || false };
+      })
+      .filter((s): s is { url: string; caption: string; isMain: boolean } => s !== null);
+
     const task = await prisma.$transaction(async (tx) => {
       await tx.taskTag.deleteMany({ where: { taskId: id } });
       await tx.screenshot.deleteMany({ where: { taskId: id } });
@@ -46,16 +72,14 @@ export async function PUT(
           tags: body.tagIds?.length
             ? { create: body.tagIds.map((tagId: string) => ({ tagId })) }
             : undefined,
-          screenshots: body.screenshots?.length
+          screenshots: screenshots.length
             ? {
-                create: body.screenshots.map(
-                  (s: { url: string; caption?: string; isMain?: boolean }, i: number) => ({
-                    url: s.url,
-                    caption: s.caption || "",
-                    order: i,
-                    isMain: s.isMain || false,
-                  })
-                ),
+                create: screenshots.map((s, i) => ({
+                  url: s.url,
+                  caption: s.caption,
+                  order: i,
+                  isMain: s.isMain,
+                })),
               }
             : undefined,
         },
@@ -68,7 +92,7 @@ export async function PUT(
       });
     });
 
-    return NextResponse.json(task);
+    return NextResponse.json(maskTaskScreenshots(task));
   } catch {
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }

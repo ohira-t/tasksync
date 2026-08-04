@@ -27,11 +27,12 @@ export function buildBacklogBody(task: Task, taskUrl: string): string {
     sections.push(`${heading("概要")}\n${task.description.trim()}`);
   }
 
+  // 注意: スクリーンショットのURLは意図的に含めない。
+  // 画像は認証が必要なアプリ内でのみ閲覧させる(顧客情報を含む場合があるため)。
+  // 画像を見たい人には「元報告」リンクから辿ってもらう
   if (task.screenshots.length > 0) {
     sections.push(
-      `${heading("スクリーンショット")}\n${task.screenshots
-        .map((s) => s.url)
-        .join("\n")}`
+      `${heading("スクリーンショット")}\n${task.screenshots.length}枚あり（元報告リンクから閲覧してください）`
     );
   }
 
